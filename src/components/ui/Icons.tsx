@@ -41,7 +41,47 @@ export const SidebarIcon = (p: P) => (
   </svg>
 );
 
-export const PencilIcon = (p: P) => (
+export const MicIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="9" y="3" width="6" height="11" rx="3" />
+    <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+  </svg>
+);
+
+export const PlayIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M7 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L8.5 4.64A1 1 0 0 0 7 5.5z" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const PauseIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="6.5" y="5" width="3.5" height="14" rx="1" fill="currentColor" stroke="none" />
+    <rect x="14" y="5" width="3.5" height="14" rx="1" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const StopIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const UploadIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5" />
+    <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+  </svg>
+);
+
+export const ClockIcon = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+  </svg>
+);
+
+export const PencilIcon =(p: P) => (
   <svg {...base(p)}>
     <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z" />
     <path d="M13.5 6.5l4 4" />

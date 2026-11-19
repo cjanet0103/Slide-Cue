@@ -1,18 +1,23 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, saveSlideTitle } from "@/lib/db";
+import { contextLabel, db, saveSlideTitle, updateProjectInfo } from "@/lib/db";
+import { formatDuration } from "@/lib/timing";
 import { usePdfDocument } from "@/hooks/usePdfDocument";
-import { getPageTitles } from "@/lib/pdf";
-import { ArrowLeftIcon, FileIcon } from "@/components/ui/Icons";
+import { useSlideTitles } from "@/hooks/useSlideTitles";
+import { buttonClass } from "@/components/ui/Button";
+import { ArrowLeftIcon, ClockIcon, FileIcon, MicIcon } from "@/components/ui/Icons";
 import { SlideViewer } from "./SlideViewer";
 import { ScriptCard } from "./ScriptCard";
 import { WholeScriptPanel } from "./WholeScriptPanel";
 import { PaneDivider } from "./PaneDivider";
+import { RunsPanel } from "./RunsPanel";
+import { ProjectInfoDialog } from "./ProjectInfoDialog";
 import styles from "./Workspace.module.css";
 
-type ScriptMode = "slides" | "whole";
+type ScriptMode = "slides" | "whole" | "runs";
 
 // Slides/script split, remembered per browser as a convenience.
 const SPLIT_KEY = "slidecue.splitRatio";
@@ -26,7 +31,14 @@ function readSplit(): number {
   }
 }
 
-export function Workspace({ projectId, onBack }: { projectId: string; onBack: () => void }) {
+interface Props {
+  projectId: string;
+  /** Opens the run history with this run selected (e.g. right after a rehearsal). */
+  initialRunId: string | null;
+  onBack: () => void;
+}
+
+export function Workspace({ projectId, initialRunId, onBack }: Props) {
   const project = useLiveQuery(() => db.projects.get(projectId), [projectId]);
   const versionId = project?.currentScriptVersionId;
   const version = useLiveQuery(
@@ -36,7 +48,9 @@ export function Workspace({ projectId, onBack }: { projectId: string; onBack: ()
   const { doc, error } = usePdfDocument(projectId);
 
   const [current, setCurrent] = useState(0);
-  const [mode, setMode] = useState<ScriptMode>("slides");
+  const [mode, setMode] = useState<ScriptMode>(initialRunId ? "runs" : "slides");
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(initialRunId);
+  const [editingInfo, setEditingInfo] = useState(false);
   const [wholeDraft, setWholeDraft] = useState<string | null>(null);
   // Bumped after applying the whole script so script cards reload their text.
   const [cardsKey, setCardsKey] = useState(0);
@@ -45,7 +59,6 @@ export function Workspace({ projectId, onBack }: { projectId: string; onBack: ()
   const scriptScroll = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLLIElement | null)[]>([]);
   const pageCount = project?.pageCount ?? 0;
-  const [titles, setTitles] = useState<string[]>([]);
   const splitRef = useRef<HTMLDivElement>(null);
   const [splitRatio, setSplitRatioState] = useState(readSplit);
   const setSplitRatio = (r: number) => {
@@ -57,19 +70,8 @@ export function Workspace({ projectId, onBack }: { projectId: string; onBack: ()
     }
   };
 
-  // Section headings come from each slide's own text.
-  useEffect(() => {
-    if (!doc) return;
-    let cancelled = false;
-    getPageTitles(doc)
-      .then((t) => {
-        if (!cancelled) setTitles(t);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [doc]);
+  // Section headings: the presenter's own, else each slide's first line of text.
+  const titles = useSlideTitles(doc, project?.slideTitles);
 
   // Keep the matching script card in view by scrolling only the script list
   // (scrollIntoView would also drag the whole window). Skipped while typing there.
@@ -101,6 +103,24 @@ export function Workspace({ projectId, onBack }: { projectId: string; onBack: ()
           <FileIcon width={16} height={16} />
           <span>{project.name}</span>
         </div>
+        <button type="button" className={styles.infoBtn} onClick={() => setEditingInfo(true)} title="발표 정보 고치기">
+          {project.context && (
+            <span className={styles.infoItem}>
+              {contextLabel(project.context.kind)}
+              {project.context.name && <span className={styles.infoName}> · {project.context.name}</span>}
+            </span>
+          )}
+          <span className={styles.infoItem}>
+            <ClockIcon width={15} height={15} />
+            {project.targetSec ? `목표 ${formatDuration(project.targetSec * 1000)}` : "목표 시간 없음"}
+          </span>
+        </button>
+        <div className={styles.topActions}>
+          <Link href={`/app/present?project=${project.id}`} className={buttonClass("primary")}>
+            <MicIcon width={18} height={18} />
+            연습 시작
+          </Link>
+        </div>
       </header>
 
       <div
@@ -129,6 +149,7 @@ export function Workspace({ projectId, onBack }: { projectId: string; onBack: ()
                 [
                   ["slides", "슬라이드별 대본"],
                   ["whole", "전체 대본"],
+                  ["runs", "회차 기록"],
                 ] as const
               ).map(([value, label]) => (
                 <button
@@ -150,7 +171,15 @@ export function Workspace({ projectId, onBack }: { projectId: string; onBack: ()
             </div>
           </div>
 
-          {mode === "slides" ? (
+          {mode === "runs" ? (
+            <RunsPanel
+              projectId={project.id}
+              titles={titles}
+              selectedRunId={selectedRunId}
+              onSelect={setSelectedRunId}
+              onFocusSlide={setCurrent}
+            />
+          ) : mode === "slides" ? (
             <div ref={scriptScroll} className={styles.scriptScroll}>
               <ol className={styles.scriptList}>
                 {Array.from({ length: pageCount }, (_, i) => (
@@ -162,7 +191,7 @@ export function Workspace({ projectId, onBack }: { projectId: string; onBack: ()
                     projectId={project.id}
                     index={i}
                     initialText={appliedSlides?.[i] ?? version.slides[i] ?? ""}
-                    title={project.slideTitles?.[i] || titles[i] || ""}
+                    title={titles[i] ?? ""}
                     active={i === current}
                     onFocusSlide={setCurrent}
                     onRename={(index, title) => {
@@ -189,6 +218,18 @@ export function Workspace({ projectId, onBack }: { projectId: string; onBack: ()
           )}
         </section>
       </div>
+
+      {editingInfo && (
+        <ProjectInfoDialog
+          mode="edit"
+          initial={{ name: project.name, context: project.context, targetSec: project.targetSec }}
+          onClose={() => setEditingInfo(false)}
+          onSubmit={async (info) => {
+            await updateProjectInfo(project.id, info);
+            setEditingInfo(false);
+          }}
+        />
+      )}
     </div>
   );
 }

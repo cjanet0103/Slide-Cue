@@ -16,6 +16,53 @@ export interface Project {
   thumbnail?: string;
   /** Slide headings the presenter typed; empty/missing = use the PDF's own text. */
   slideTitles?: string[];
+  /** Target presentation length in seconds, if the presenter set one. */
+  targetSec?: number;
+  /** Where the talk is given, e.g. { kind: "contest", name: "캡스톤 디자인 공모전" }. */
+  context?: PresentationContext;
+}
+
+export type ContextKind = "contest" | "class" | "pitch" | "other";
+
+export interface PresentationContext {
+  kind: ContextKind;
+  name: string;
+}
+
+export const CONTEXT_KINDS: { kind: ContextKind; label: string; namePlaceholder: string }[] = [
+  { kind: "contest", label: "공모전", namePlaceholder: "공모전 이름" },
+  { kind: "class", label: "수업 발표", namePlaceholder: "과목 이름" },
+  { kind: "pitch", label: "IR·데모데이", namePlaceholder: "행사·투자자 미팅 이름" },
+  { kind: "other", label: "기타", namePlaceholder: "발표 상황" },
+];
+
+export const contextLabel = (kind: ContextKind) => CONTEXT_KINDS.find((k) => k.kind === kind)?.label ?? "";
+
+/** Fields the presenter enters when registering a presentation (and can edit later). */
+export interface ProjectInfo {
+  name: string;
+  context?: PresentationContext;
+  targetSec?: number;
+}
+
+export type RunMode = "rehearsal" | "live";
+
+/** One rehearsal (or live talk): its timing and the script version it used. */
+export interface Run {
+  id: string;
+  projectId: string;
+  mode: RunMode;
+  scriptVersionId: string;
+  startedAt: number;
+  endedAt: number;
+  /** Total time excluding explicit pauses. */
+  totalMs: number;
+  /** Accumulated time per slide. */
+  slideMs: number[];
+  /** Each slide visit on the run clock, in order. */
+  visits: { slide: number; startMs: number; endMs: number }[];
+  /** Target length at the time of the run, if any. */
+  targetSec?: number;
 }
 
 export interface PdfFile {
@@ -37,6 +84,7 @@ class SlideCueDB extends Dexie {
   projects!: EntityTable<Project, "id">;
   pdfs!: EntityTable<PdfFile, "projectId">;
   scriptVersions!: EntityTable<ScriptVersion, "id">;
+  runs!: EntityTable<Run, "id">;
 
   constructor() {
     super("slidecue");
@@ -45,8 +93,30 @@ class SlideCueDB extends Dexie {
       pdfs: "projectId",
       scriptVersions: "id, projectId",
     });
+    // v2 (stage 2): rehearsal runs.
+    this.version(2).stores({
+      runs: "id, projectId, [projectId+startedAt]",
+    });
   }
 }
+
+/** Saves a finished run and locks the script version it used (PRD §4.1). */
+export async function saveRun(run: Run): Promise<void> {
+  await db.transaction("rw", db.runs, db.scriptVersions, async () => {
+    await db.runs.add(run);
+    await db.scriptVersions.update(run.scriptVersionId, { locked: true });
+  });
+}
+
+/** Runs of a project, newest first. */
+export function listRuns(projectId: string): Promise<Run[]> {
+  return db.runs
+    .where("[projectId+startedAt]")
+    .between([projectId, -Infinity], [projectId, Infinity])
+    .reverse()
+    .toArray();
+}
+
 
 export const db = new SlideCueDB();
 
@@ -54,12 +124,22 @@ export function newId(): string {
   return crypto.randomUUID();
 }
 
+export async function updateProjectInfo(projectId: string, info: ProjectInfo): Promise<void> {
+  await db.projects.update(projectId, {
+    name: info.name,
+    context: info.context,
+    targetSec: info.targetSec,
+    updatedAt: Date.now(),
+  });
+}
+
 export async function createProject(
-  name: string,
+  info: ProjectInfo,
   pdf: Blob,
   pageCount: number,
   thumbnail?: string,
 ): Promise<Project> {
+  const { name, context, targetSec } = info;
   const now = Date.now();
   const version: ScriptVersion = {
     id: newId(),
@@ -76,6 +156,8 @@ export async function createProject(
     pageCount,
     currentScriptVersionId: version.id,
     thumbnail,
+    context,
+    targetSec,
   };
   version.projectId = project.id;
   await db.transaction("rw", db.projects, db.pdfs, db.scriptVersions, async () => {

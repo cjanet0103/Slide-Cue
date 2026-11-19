@@ -1,22 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import { createProject, db } from "@/lib/db";
-import { openPdf, renderThumbnail } from "@/lib/pdf";
 import { FileIcon, FolderIcon, PlusIcon, SidebarIcon } from "@/components/ui/Icons";
 import { Library } from "./Library";
 import { Workspace } from "./Workspace";
+import { ProjectInfoDialog } from "./ProjectInfoDialog";
 import styles from "./Shell.module.css";
 
 export function EditorApp() {
   const router = useRouter();
   const params = useSearchParams();
-  const fileInput = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const [collapsedByUser, setCollapsedByUser] = useState<boolean | null>(null);
 
   const projects = useLiveQuery(() => db.projects.orderBy("updatedAt").reverse().toArray(), []);
@@ -35,40 +33,10 @@ export function EditorApp() {
     router.push("/app");
   };
 
-  const onFile = async (file: File | undefined) => {
-    if (!file) return;
-    setUploadError(null);
-    setBusy(true);
-    try {
-      const doc = await openPdf(file);
-      const pageCount = doc.numPages;
-      const thumbnail = pageCount > 0 ? await renderThumbnail(doc) : undefined;
-      await doc.destroy();
-      if (pageCount < 1) throw new Error("empty pdf");
-      const name = file.name.replace(/\.pdf$/i, "") || "새 발표";
-      const project = await createProject(name, file, pageCount, thumbnail);
-      openProject(project.id);
-    } catch {
-      setUploadError("PDF를 열 수 없어요. 한 장 이상인 PDF 파일을 다시 선택해 주세요.");
-    } finally {
-      setBusy(false);
-      if (fileInput.current) fileInput.current.value = "";
-    }
-  };
-
-  const openPicker = () => fileInput.current?.click();
+  const openPicker = () => setCreating(true);
 
   return (
     <div className={`${styles.shell} ${collapsed ? styles.collapsed : ""}`}>
-      <input
-        ref={fileInput}
-        type="file"
-        accept="application/pdf,.pdf"
-        className="visually-hidden"
-        onChange={(e) => onFile(e.target.files?.[0])}
-        aria-label="발표 PDF 선택"
-      />
-
       <aside className={styles.sidebar} aria-label="메뉴">
         <div className={styles.sidebarTop}>
           {!collapsed && (
@@ -88,9 +56,9 @@ export function EditorApp() {
         </div>
 
         <nav className={styles.nav}>
-          <button type="button" className={styles.navItem} onClick={openPicker} disabled={busy} title="새 발표">
+          <button type="button" className={styles.navItem} onClick={openPicker} title="새 발표">
             <PlusIcon />
-            <span className={styles.label}>{busy ? "PDF 여는 중…" : "새 발표"}</span>
+            <span className={styles.label}>새 발표</span>
           </button>
           <button
             type="button"
@@ -126,17 +94,25 @@ export function EditorApp() {
       </aside>
 
       <main className={styles.content}>
-        {uploadError && (
-          <p className={styles.errorBar} role="alert">
-            {uploadError}
-          </p>
-        )}
         {projects === undefined ? null : openId ? (
-          <Workspace key={openId} projectId={openId} onBack={goLibrary} />
+          <Workspace key={openId} projectId={openId} initialRunId={params.get("run")} onBack={goLibrary} />
         ) : (
-          <Library projects={projects} busy={busy} onNew={openPicker} onOpen={openProject} />
+          <Library projects={projects} onNew={openPicker} onOpen={openProject} />
         )}
       </main>
+
+      {creating && (
+        <ProjectInfoDialog
+          mode="create"
+          onClose={() => setCreating(false)}
+          onSubmit={async (info, pdf) => {
+            if (!pdf) return;
+            const project = await createProject(info, pdf.file, pdf.pageCount, pdf.thumbnail);
+            setCreating(false);
+            openProject(project.id);
+          }}
+        />
+      )}
     </div>
   );
 }

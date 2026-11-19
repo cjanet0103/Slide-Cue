@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
-import { db, type Project } from "@/lib/db";
+import { contextLabel, db, type Project } from "@/lib/db";
 import { openPdf, renderThumbnail } from "@/lib/pdf";
 import { Button } from "@/components/ui/Button";
 import { FileIcon, PlusIcon } from "@/components/ui/Icons";
@@ -75,12 +75,11 @@ function Cover({ project }: { project: Project }) {
 
 interface Props {
   projects: Project[];
-  busy: boolean;
   onNew: () => void;
   onOpen: (id: string) => void;
 }
 
-export function Library({ projects, busy, onNew, onOpen }: Props) {
+export function Library({ projects, onNew, onOpen }: Props) {
   const dismissed = useSyncExternalStore(subscribe, readDismissed, () => true);
 
   return (
@@ -104,9 +103,9 @@ export function Library({ projects, busy, onNew, onOpen }: Props) {
 
         <ul className={styles.grid}>
           <li>
-            <button type="button" className={styles.newCard} onClick={onNew} disabled={busy}>
+            <button type="button" className={styles.newCard} onClick={onNew}>
               <PlusIcon width={28} height={28} />
-              <span>{busy ? "PDF 여는 중…" : "새로 만들기"}</span>
+              <span>새로 만들기</span>
             </button>
           </li>
           {projects.map((p) => (
@@ -115,7 +114,9 @@ export function Library({ projects, busy, onNew, onOpen }: Props) {
                 <Cover project={p} />
                 <span className={styles.cardName}>{p.name}</span>
                 <span className={styles.cardMeta}>
-                  <span className={styles.badge}>PDF</span> {p.pageCount}장 · {formatDate(p.updatedAt)}
+                  <span className={styles.badge}>{p.context ? contextLabel(p.context.kind) : "PDF"}</span>{" "}
+                  {p.context?.name ? `${p.context.name} · ` : ""}
+                  {p.pageCount}장 · {formatDate(p.updatedAt)}
                 </span>
               </button>
             </li>

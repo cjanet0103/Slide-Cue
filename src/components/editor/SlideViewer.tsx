@@ -10,6 +10,8 @@ interface Props {
   index: number;
   pageCount: number;
   onChange: (index: number) => void;
+  /** Off when the page handles arrow keys globally (presenter screen). */
+  keyboard?: boolean;
 }
 
 // One wheel "gesture" moves one slide; trackpads fire many small events.
@@ -17,7 +19,7 @@ const WHEEL_THRESHOLD = 40;
 const WHEEL_COOLDOWN_MS = 450;
 
 /** Shows one slide at a time with side arrows; wheel and arrow keys move by one. */
-export function SlideViewer({ doc, index, pageCount, onChange }: Props) {
+export function SlideViewer({ doc, index, pageCount, onChange, keyboard = true }: Props) {
   const viewerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -84,6 +86,7 @@ export function SlideViewer({ doc, index, pageCount, onChange }: Props) {
   }, []);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    if (!keyboard) return;
     if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "PageDown") {
       e.preventDefault();
       go(1);

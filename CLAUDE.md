@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-Project setup (Next.js 16, React 19, TypeScript, ESLint 9 flat config, Vitest 3) is done. The PRD is split into 5 stages, built one at a time per the rules above:
+Project setup (Next.js 16, React 19, TypeScript, ESLint 9 flat config, Vitest 3) is done. The PRD is split into 5 stages, built one at a time per the rules above. Stage 1 is committed; stage 2 is built and awaiting the user's check.
 
 | 단계 | 내용 | PRD 근거 / 인수 테스트 |
 |---|---|---|
@@ -24,7 +24,7 @@ Project setup (Next.js 16, React 19, TypeScript, ESLint 9 flat config, Vitest 3)
 | 4 | **실시간 스크립트 트래킹과 실전** — 기기 내 음성 인식, 구절 강조·수동 보정, 실전 모드, `/app/audience` 청중 화면, 자동 넘김 | F3, §4.3, T5·T6·T7·T9 |
 | 5 | **실제 발화로 대본 다듬기 + 공개 페이지** — 원문/인식문/반영 문장 비교, 선택 문장만 반영, `/`·`/guides/presentation-rehearsal`, robots·sitemap | F2, §4.4·4.5, T4 |
 
-Out of scope until asked: file export/import between devices (Should), long-pause detection and keywords (Could), GA4, whisper.cpp, payments.
+Out of scope until asked: file export/import between devices (Should), long-pause detection and keywords (Could), GA4, whisper.cpp, payments. Payments, when added, go through Groble hosted payment links (see the PRD tech-stack table); what is paid for is still undecided, and how a no-login app verifies a purchase must be checked against what Groble offers first.
 
 Commands (once dependencies are installed with `npm install`): `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`, `npm test` (single file: `npx vitest run src/lib/timing.test.ts`), `npm run gen:fixture` (3-page test PDF).
 
@@ -65,7 +65,9 @@ These come from PRD §4 and are easy to break:
 - `src/app/` routes; `/app/*` routes are client-heavy and carry `noindex` via `src/app/app/layout.tsx`.
 - `src/lib/db.ts` — the single Dexie database. Add tables only by adding a new `db.version(n)` block; never edit an existing version's schema (users' IndexedDB data must upgrade cleanly).
 - Script versions: a project points at `currentScriptVersionId`. Unlocked versions are edited in place; once a run uses a version it is `locked`, and the next edit copies it into a new version (`saveSlideScript` in `src/lib/db.ts`).
-- `src/lib/pdf.ts` lazy-imports `pdfjs-dist` so the PDF engine only loads on app screens.
+- `src/lib/pdf.ts` lazy-imports `pdfjs-dist` so the PDF engine only loads on app screens. PDF.js "display" renders wait for animation frames, so they stall in a hidden/background tab; `renderThumbnail` uses the "print" intent to avoid that.
+- `src/lib/timing.ts` is the pure timing reducer (start/pause/resume/goto/end) used by the presenter screen; `timing.test.ts` encodes PRD T2. Runs are saved via `saveRun`, which also locks the script version used.
+- Screens: `/app` (`EditorApp` → `Library` or `Workspace` with tabs 슬라이드별 대본 / 전체 대본 / 회차 기록), `/app/present` (`PresenterApp`, rehearsal). `?project=<id>&run=<id>` opens a project on its run history.
 - Design tokens live as CSS variables in `src/app/globals.css`; components use CSS Modules next to the component.
 
 ## Testing (planned)

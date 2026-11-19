@@ -1,0 +1,187 @@
+.panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--space-xxl) var(--space-xxl) var(--space-lg);
+}
+
+.empty {
+  padding: var(--space-xxl) var(--space-lg);
+  text-align: center;
+}
+
+.emptyTitle {
+  margin: 0 0 var(--space-xs);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink-muted);
+}
+
+/* Run selector chips */
+.runChips {
+  display: flex;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  padding: var(--space-xxs) 0 var(--space-md);
+  scrollbar-width: thin;
+}
+
+.chip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 6px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-md);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+}
+
+.chip:hover {
+  background: var(--canvas-soft);
+}
+
+.chipActive,
+.chipActive:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-primary);
+}
+
+.chipNo {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.chipDate {
+  font-size: 12px;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Summary */
+.summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding: var(--space-md) 0 var(--space-lg);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.summaryLabel {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.summaryTotal {
+  margin: 2px 0 0;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  line-height: 1.15;
+}
+
+.summaryMeta {
+  text-align: right;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.summaryMeta p {
+  margin: 2px 0;
+}
+
+/* Per-slide table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 12px 6px;
+  border-bottom: 1px solid var(--hairline);
+  text-align: left;
+  font-weight: 400;
+}
+
+.table thead th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding-top: var(--space-md);
+}
+
+.table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.slideBtn {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.slideNo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.slideName {
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slideBtn:hover .slideName {
+  color: var(--primary);
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+.less {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.more {
+  color: var(--accent-orange);
+  font-weight: 600;
+}
+
+.same {
+  color: var(--ink-muted);
+}
+
+.none {
+  font-size: 13px;
+  color: var(--ink-faint);
+}
