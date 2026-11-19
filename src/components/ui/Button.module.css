@@ -1,0 +1,68 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 40px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 80ms ease, background-color 120ms ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.button:hover {
+  text-decoration: none;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Marketing / main CTA: pill, the single blue action */
+.primary {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-radius: var(--rounded-full);
+  padding: 8px 20px;
+}
+
+.primary:active:not(:disabled) {
+  background: var(--primary-active);
+}
+
+.secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--rounded-full);
+  padding: 8px 20px;
+  box-shadow: var(--shadow-1);
+}
+
+/* Utility / nav buttons: tighter 8px radius with hairline */
+.utility {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--hairline);
+  border-radius: var(--rounded-md);
+  padding: 4px 14px;
+}
+
+.ghost {
+  background: transparent;
+  color: var(--ink-muted);
+  border-radius: var(--rounded-md);
+  padding: 4px 10px;
+}
+
+.ghost:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.04);
+}
