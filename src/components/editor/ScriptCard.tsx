@@ -17,13 +17,15 @@ interface Props {
   onFocusSlide: (index: number) => void;
   /** Save a new heading; "" restores the automatic one. */
   onRename: (index: number, title: string) => void;
+  /** Locked while rehearsing so the script used by the run doesn't change. */
+  readOnly?: boolean;
 }
 
 const SAVE_DELAY_MS = 500;
 
 /** One slide's script as a document section: number, heading, then the text. */
 export const ScriptCard = forwardRef<HTMLLIElement, Props>(function ScriptCard(
-  { projectId, index, initialText, title, active, onFocusSlide, onRename },
+  { projectId, index, initialText, title, active, onFocusSlide, onRename, readOnly = false },
   ref,
 ) {
   const [text, setText] = useState(initialText);
@@ -105,7 +107,7 @@ export const ScriptCard = forwardRef<HTMLLIElement, Props>(function ScriptCard(
               type="button"
               className={styles.sectionTitle}
               onClick={() => onFocusSlide(index)}
-              onDoubleClick={startTitle}
+              onDoubleClick={readOnly ? undefined : startTitle}
               title="두 번 클릭하면 제목을 바꿀 수 있어요"
             >
               {title || `슬라이드 ${slideNo}`}
@@ -126,7 +128,8 @@ export const ScriptCard = forwardRef<HTMLLIElement, Props>(function ScriptCard(
           value={text}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => onFocusSlide(index)}
-          placeholder="대본을 붙여 넣으세요"
+          readOnly={readOnly}
+          placeholder={readOnly ? "" : "대본을 붙여 넣으세요"}
           rows={2}
         />
       </div>

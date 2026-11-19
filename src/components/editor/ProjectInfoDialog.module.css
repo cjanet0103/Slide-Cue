@@ -103,7 +103,7 @@
 
 .drop:hover:not(:disabled) {
   border-color: var(--primary);
-  background: #f5f9fe;
+  background: var(--brand-softer);
 }
 
 .drop:disabled {

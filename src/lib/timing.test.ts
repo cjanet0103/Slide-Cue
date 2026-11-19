@@ -61,6 +61,11 @@ describe("timing — edge cases", () => {
     expect(st.runMs).toBe(s(15));
   });
 
+  it("resets to a fresh idle state for the next rehearsal", () => {
+    const ended = run([{ type: "start", at: 0, slide: 1 }, { type: "end", at: s(5) }]);
+    expect(applyTiming(ended, { type: "reset", slideCount: 3 })).toEqual(initialTiming(3));
+  });
+
   it("ignores events that don't fit the current state", () => {
     const idle = initialTiming(2);
     expect(applyTiming(idle, { type: "pause", at: 5 })).toBe(idle);

@@ -1,8 +1,18 @@
-/* Design tokens from DESIGN-notion (1).md */
+/* Design tokens: layout/type from DESIGN-notion (1).md, colors = SlideCue brand */
 :root {
-  --primary: #0075de;
-  --primary-active: #005bab;
+  /* Brand: mint fill for main actions, soft mint for highlights, deep green for accent text/lines */
+  --brand: #00fcb4;
+  --brand-active: #00dca0;
+  --on-brand: #04261d;
+  --brand-soft: #d1f6ec;
+  --brand-softer: #ecfaf5;
+  --brand-deep: #08735b;
+
+  /* Accent used for links, focus, active numbers/titles */
+  --primary: var(--brand-deep);
+  --primary-active: #065c49;
   --secondary: #213183;
+  /* Text on dark (ink) fills */
   --on-primary: #ffffff;
   --canvas: #ffffff;
   --canvas-soft: #f6f5f4;
@@ -16,7 +26,8 @@
   --accent-orange: #dd5b00;
   --accent-green: #1aae39;
   --danger-bg: #fdf0e7;
-  --highlight-bg: #e8f2fc;
+  /* Live-tracking highlight (stage 4) */
+  --highlight-bg: var(--brand-soft);
 
   --rounded-xs: 4px;
   --rounded-sm: 5px;

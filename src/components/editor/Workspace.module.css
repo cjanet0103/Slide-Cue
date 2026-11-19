@@ -493,3 +493,144 @@
   text-overflow: ellipsis;
   color: var(--ink-secondary);
 }
+
+/* Keep tab labels on one line; tighten the top bar on narrow windows */
+.segment {
+  white-space: nowrap;
+}
+
+.docTab {
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.topActions {
+  flex-shrink: 0;
+}
+
+@media (max-width: 760px) {
+  .infoBtn {
+    display: none;
+  }
+
+  .segment {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+}
+
+/* Rehearsal clocks in the top bar (replace the info button while rehearsing) */
+.clocks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  padding: 0 var(--space-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.recDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--rounded-full);
+  background: var(--brand);
+  animation: recPulse 1.2s ease-in-out infinite;
+}
+
+.recDotPaused {
+  background: var(--ink-faint);
+  animation: none;
+}
+
+@keyframes recPulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.clockLabel,
+.clockMain,
+.clockTarget,
+.clockSlide {
+  line-height: 1;
+}
+
+.clockLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.clockMain {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+}
+
+.clockOver {
+  color: var(--accent-orange);
+}
+
+.clockTarget {
+  font-size: 14px;
+  color: var(--ink-faint);
+}
+
+.clockDivider {
+  width: 1px;
+  height: 14px;
+  margin: 0 var(--space-xs);
+  background: var(--hairline);
+}
+
+.clockSlide {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+.saveFail {
+  font-size: 14px;
+  color: #793400;
+}
+
+.segment:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.iconBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .clockDivider,
+  .clockSlide,
+  .clocks .clockLabel:last-of-type {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .pauseLabel {
+    display: none;
+  }
+
+  .topbar {
+    gap: var(--space-xs);
+    padding: 0 var(--space-sm);
+  }
+
+  .clocks {
+    padding: 0 var(--space-xxs);
+  }
+
+  .clocks .clockLabel,
+  .clockTarget {
+    display: none;
+  }
+}

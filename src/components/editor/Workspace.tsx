@@ -1,14 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { contextLabel, db, saveSlideTitle, updateProjectInfo } from "@/lib/db";
-import { formatDuration } from "@/lib/timing";
+import { formatClock, formatDuration } from "@/lib/timing";
+import { useRehearsal } from "@/hooks/useRehearsal";
 import { usePdfDocument } from "@/hooks/usePdfDocument";
 import { useSlideTitles } from "@/hooks/useSlideTitles";
-import { buttonClass } from "@/components/ui/Button";
-import { ArrowLeftIcon, ClockIcon, FileIcon, MicIcon } from "@/components/ui/Icons";
+import { Button } from "@/components/ui/Button";
+import { ArrowLeftIcon, ClockIcon, FileIcon, MicIcon, PauseIcon, PlayIcon, StopIcon } from "@/components/ui/Icons";
 import { SlideViewer } from "./SlideViewer";
 import { ScriptCard } from "./ScriptCard";
 import { WholeScriptPanel } from "./WholeScriptPanel";
@@ -73,6 +73,55 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
   // Section headings: the presenter's own, else each slide's first line of text.
   const titles = useSlideTitles(doc, project?.slideTitles);
 
+  // Rehearsal runs right here in the editor: same slide view, timers in the top bar.
+  const rehearsal = useRehearsal({
+    projectId,
+    pageCount,
+    scriptVersionId: versionId ?? "",
+    targetSec: project?.targetSec,
+    onSaved: (run) => {
+      setSelectedRunId(run.id);
+      setMode("runs");
+    },
+  });
+  const rehearsing = rehearsal.inProgress;
+
+  const changeSlide = (index: number) => {
+    setCurrent(index);
+    rehearsal.goTo(index);
+  };
+
+  const startRehearsal = () => {
+    (document.activeElement as HTMLElement | null)?.blur?.();
+    setCurrent(0);
+    setMode("slides");
+    rehearsal.start(0);
+  };
+
+  // While rehearsing, arrow keys / presentation clicker move slides and P pauses.
+  const keys = useRef({ changeSlide, current, pageCount, rehearsal });
+  useEffect(() => {
+    keys.current = { changeSlide, current, pageCount, rehearsal };
+  });
+  useEffect(() => {
+    if (!rehearsing) return;
+    const onKey = (e: KeyboardEvent) => {
+      const k = keys.current;
+      if (e.target instanceof Element && e.target.closest("input, textarea")) return;
+      if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(e.key)) {
+        e.preventDefault();
+        if (k.current < k.pageCount - 1) k.changeSlide(k.current + 1);
+      } else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) {
+        e.preventDefault();
+        if (k.current > 0) k.changeSlide(k.current - 1);
+      } else if (e.key === "p" || e.key === "P") {
+        k.rehearsal.togglePause();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [rehearsing]);
+
   // Keep the matching script card in view by scrolling only the script list
   // (scrollIntoView would also drag the whole window). Skipped while typing there.
   useEffect(() => {
@@ -96,13 +145,35 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
   return (
     <div className={styles.workspace}>
       <header className={styles.topbar}>
-        <button type="button" className={styles.iconBtn} onClick={onBack} aria-label="내 발표로 돌아가기" title="내 발표">
+        <button
+          type="button"
+          className={styles.iconBtn}
+          onClick={onBack}
+          disabled={rehearsing}
+          aria-label="내 발표로 돌아가기"
+          title={rehearsing ? "연습을 끝낸 뒤 나갈 수 있어요" : "내 발표"}
+        >
           <ArrowLeftIcon />
         </button>
         <div className={styles.docTab}>
           <FileIcon width={16} height={16} />
           <span>{project.name}</span>
         </div>
+        {rehearsing ? (
+          <div className={styles.clocks} aria-label="연습 시간">
+            <span className={`${styles.recDot} ${rehearsal.paused ? styles.recDotPaused : ""}`} aria-hidden="true" />
+            <span className={styles.clockLabel}>{rehearsal.paused ? "일시정지" : "연습 중"}</span>
+            <span
+              className={`${styles.clockMain} ${project.targetSec && rehearsal.totalMs > project.targetSec * 1000 ? styles.clockOver : ""}`}
+            >
+              {formatClock(rehearsal.totalMs)}
+            </span>
+            {project.targetSec ? <span className={styles.clockTarget}>/ {formatClock(project.targetSec * 1000)}</span> : null}
+            <span className={styles.clockDivider} aria-hidden="true" />
+            <span className={styles.clockLabel}>슬라이드</span>
+            <span className={styles.clockSlide}>{formatClock(rehearsal.slideMs)}</span>
+          </div>
+        ) : (
         <button type="button" className={styles.infoBtn} onClick={() => setEditingInfo(true)} title="발표 정보 고치기">
           {project.context && (
             <span className={styles.infoItem}>
@@ -115,11 +186,38 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
             {project.targetSec ? `목표 ${formatDuration(project.targetSec * 1000)}` : "목표 시간 없음"}
           </span>
         </button>
+        )}
         <div className={styles.topActions}>
-          <Link href={`/app/present?project=${project.id}`} className={buttonClass("primary")}>
-            <MicIcon width={18} height={18} />
-            연습 시작
-          </Link>
+          {rehearsal.saveError ? (
+            <>
+              <span className={styles.saveFail}>기록을 저장하지 못했어요</span>
+              <Button variant="primary" onClick={rehearsal.retry} disabled={rehearsal.saving}>
+                다시 저장
+              </Button>
+            </>
+          ) : rehearsing ? (
+            <>
+              <Button
+                variant="utility"
+                onClick={rehearsal.togglePause}
+                disabled={rehearsal.saving}
+                aria-label={rehearsal.paused ? "재개" : "일시정지"}
+              >
+                {rehearsal.paused ? <PlayIcon width={16} height={16} /> : <PauseIcon width={16} height={16} />}
+                <span className={styles.pauseLabel}>{rehearsal.paused ? "재개" : "일시정지"}</span>
+              </Button>
+              {/* Same spot as 연습 시작, so the button doesn't jump */}
+              <Button variant="primary" onClick={() => void rehearsal.finish()} disabled={rehearsal.saving}>
+                <StopIcon width={16} height={16} />
+                {rehearsal.saving ? "저장 중…" : "종료"}
+              </Button>
+            </>
+          ) : (
+            <Button variant="primary" onClick={startRehearsal}>
+              <MicIcon width={18} height={18} />
+              연습 시작
+            </Button>
+          )}
         </div>
       </header>
 
@@ -130,7 +228,7 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
       >
         <section className={styles.slidesCol} aria-label="슬라이드">
           {error && <p className={styles.errorBox}>PDF를 열지 못했어요. 대본은 그대로 편집할 수 있어요.</p>}
-          <SlideViewer doc={doc} index={current} pageCount={pageCount} onChange={setCurrent} />
+          <SlideViewer doc={doc} index={current} pageCount={pageCount} onChange={changeSlide} keyboard={!rehearsing} />
         </section>
 
         <PaneDivider
@@ -157,6 +255,7 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
                   type="button"
                   role="tab"
                   aria-selected={mode === value}
+                  disabled={rehearsing && value !== "slides"}
                   className={`${styles.segment} ${mode === value ? styles.segmentActive : ""}`}
                   onClick={() => {
                     // Storage has caught up by now; reload cards from it.
@@ -193,7 +292,8 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
                     initialText={appliedSlides?.[i] ?? version.slides[i] ?? ""}
                     title={titles[i] ?? ""}
                     active={i === current}
-                    onFocusSlide={setCurrent}
+                    onFocusSlide={changeSlide}
+                    readOnly={rehearsing}
                     onRename={(index, title) => {
                       saveSlideTitle(project.id, index, title).catch(() => {});
                     }}

@@ -12,7 +12,9 @@ export type TimingEvent =
   | { type: "pause"; at: number }
   | { type: "resume"; at: number }
   | { type: "goto"; at: number; slide: number }
-  | { type: "end"; at: number };
+  | { type: "end"; at: number }
+  /** Back to idle so a new rehearsal can start (after saving or discarding). */
+  | { type: "reset"; slideCount: number };
 
 export interface Visit {
   slide: number;
@@ -90,6 +92,8 @@ export function applyTiming(state: TimingState, event: TimingEvent): TimingState
       if (state.status === "idle" || state.status === "ended") return state;
       return { ...advance(state, event.at), status: "ended" };
     }
+    case "reset":
+      return initialTiming(event.slideCount);
   }
 }
 

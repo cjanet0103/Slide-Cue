@@ -53,18 +53,18 @@ export function RunsPanel({ projectId, titles, selectedRunId, onSelect, onFocusS
 
   return (
     <div className={styles.panel}>
-      <div className={styles.runChips} role="listbox" aria-label="회차 선택">
+      <div className={styles.runList} role="listbox" aria-label="회차 선택">
         {runs.map((r) => (
           <button
             key={r.id}
             type="button"
             role="option"
             aria-selected={r.id === selected.id}
-            className={`${styles.chip} ${r.id === selected.id ? styles.chipActive : ""}`}
+            className={`${styles.runRow} ${r.id === selected.id ? styles.runRowActive : ""}`}
             onClick={() => onSelect(r.id)}
           >
-            <span className={styles.chipNo}>{numberOf.get(r.id)}회차</span>
-            <span className={styles.chipDate}>{dateFmt.format(r.startedAt)}</span>
+            <span className={styles.runNo}>{numberOf.get(r.id)}회차</span>
+            <span className={styles.runDate}>{dateFmt.format(r.startedAt)}</span>
           </button>
         ))}
       </div>

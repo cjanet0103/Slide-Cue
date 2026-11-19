@@ -18,6 +18,12 @@
   text-decoration: none;
 }
 
+/* Leading icons have built-in side space; pull them in so the icon+label
+   group looks centered (the visible edges get equal margins). */
+.button > svg:first-child {
+  margin-left: -4px;
+}
+
 .button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -27,16 +33,21 @@
   transform: scale(0.97);
 }
 
-/* Marketing / main CTA: pill, the single blue action */
+/* Main action: pill in brand mint with dark text (white on mint is hard to read) */
 .primary {
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--brand);
+  color: var(--on-brand);
+  font-weight: 600;
   border-radius: var(--rounded-full);
   padding: 8px 20px;
 }
 
+.primary:hover:not(:disabled) {
+  background: var(--brand-active);
+}
+
 .primary:active:not(:disabled) {
-  background: var(--primary-active);
+  background: var(--brand-active);
 }
 
 .secondary {

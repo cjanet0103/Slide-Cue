@@ -19,7 +19,7 @@ Project setup (Next.js 16, React 19, TypeScript, ESLint 9 flat config, Vitest 3)
 | 단계 | 내용 | PRD 근거 / 인수 테스트 |
 |---|---|---|
 | 1 | **내 발표와 대본 준비** — 디자인 토큰, `/app` 편집 화면, PDF 등록·썸네일, 슬라이드별 대본 작성·자동 저장, `슬라이드별 대본 / 전체 대본` 전환(전체 대본은 기기 안에서 슬라이드별로 나누기), 대본 버전 | 화면 1 일부, §4.1, T1 |
-| 2 | **연습 모드와 시간 기록** — `/app/present` 발표자 화면, 전체·슬라이드별 타이머, 일시정지, 목표 시간, 회차 저장, 직전 연습과 비교 | F1, §4.2, T2 |
+| 2 | **연습 모드와 시간 기록** — 편집 화면 안에서 바로 연습(별도 페이지 없음), 전체·슬라이드별 타이머, 일시정지, 목표 시간, 회차 저장, 직전 연습과 비교 | F1, §4.2, T2 |
 | 3 | **녹음 보관과 회고** — 녹음 보관 선택, 슬라이드별 다시 듣기, 다시 들을 곳 표시, 회고 메모, 저장 실패 안내 | F1, §4.2·4.4, T3·T9 일부 |
 | 4 | **실시간 스크립트 트래킹과 실전** — 기기 내 음성 인식, 구절 강조·수동 보정, 실전 모드, `/app/audience` 청중 화면, 자동 넘김 | F3, §4.3, T5·T6·T7·T9 |
 | 5 | **실제 발화로 대본 다듬기 + 공개 페이지** — 원문/인식문/반영 문장 비교, 선택 문장만 반영, `/`·`/guides/presentation-rehearsal`, robots·sitemap | F2, §4.4·4.5, T4 |
@@ -44,7 +44,7 @@ Laptop and iPad (landscape/portrait) only; smartphones are out of scope. No logi
 
 ## Planned architecture (from PRD §1)
 
-- **Next.js App Router + React + TypeScript + CSS Modules, deployed as one Vercel project.** Public pages (`/`, `/guides/presentation-rehearsal`) are statically generated and must be readable with JS disabled. App routes: `/app` (list + editor + run history), `/app/present` (presenter), `/app/audience` (audience window). App routes get `noindex` but must **not** be blocked in `robots.txt`.
+- **Next.js App Router + React + TypeScript + CSS Modules, deployed as one Vercel project.** Public pages (`/`, `/guides/presentation-rehearsal`) are statically generated and must be readable with JS disabled. App routes: `/app` (list + editor + in-place rehearsal + run history) and, from stage 4, `/app/audience` (audience window). There is no separate presenter page: the user found leaving the editor tiring, so rehearsal (and later live mode) switches the editor in place, keeping slide/script positions and putting 종료 where 연습 시작 was. App routes get `noindex` but must **not** be blocked in `robots.txt`.
 - **Everything runs client-side.** PDF.js renders slides (current + adjacent first). IndexedDB via Dexie.js stores projects, script versions, runs, transcripts and opt-in audio chunks. getUserMedia + MediaRecorder for recording, saved in chunks.
 - **Presenter ↔ audience sync** uses `BroadcastChannel` (same origin, same machine), sending session id + slide number only. The audience window must never receive script, transcript, notes or recording state.
 - **Speech recognition**: Web Speech API with `processLocally = true` only. If on-device recognition isn't available, fall back to "수동 진행" (manual mode) — **never silently fall back to a cloud speech API**. whisper.cpp WASM in a Web Worker is a candidate fallback, lazy-loaded and cached per version.
@@ -67,8 +67,8 @@ These come from PRD §4 and are easy to break:
 - Script versions: a project points at `currentScriptVersionId`. Unlocked versions are edited in place; once a run uses a version it is `locked`, and the next edit copies it into a new version (`saveSlideScript` in `src/lib/db.ts`).
 - `src/lib/pdf.ts` lazy-imports `pdfjs-dist` so the PDF engine only loads on app screens. PDF.js "display" renders wait for animation frames, so they stall in a hidden/background tab; `renderThumbnail` uses the "print" intent to avoid that.
 - `src/lib/timing.ts` is the pure timing reducer (start/pause/resume/goto/end) used by the presenter screen; `timing.test.ts` encodes PRD T2. Runs are saved via `saveRun`, which also locks the script version used.
-- Screens: `/app` (`EditorApp` → `Library` or `Workspace` with tabs 슬라이드별 대본 / 전체 대본 / 회차 기록), `/app/present` (`PresenterApp`, rehearsal). `?project=<id>&run=<id>` opens a project on its run history.
-- Design tokens live as CSS variables in `src/app/globals.css`; components use CSS Modules next to the component.
+- Screens: `/app` (`EditorApp` → `Library` or `Workspace` with tabs 슬라이드별 대본 / 전체 대본 / 회차 기록). Rehearsal state lives in `src/hooks/useRehearsal.ts` and is rendered inside `Workspace` (clocks replace the info button; scripts go read-only). `?project=<id>&run=<id>` opens a project on its run history.
+- Design tokens live as CSS variables in `src/app/globals.css`; components use CSS Modules next to the component. Brand colors override the design doc's blue: `--brand` #00FCB4 (main action fills, with dark `--on-brand` text), `--brand-soft` #D1F6EC (highlights, incl. the stage-4 live-tracking highlight `--highlight-bg`), `--brand-deep` #08735B (= `--primary`: accent text, active numbers/titles, focus). Don't reintroduce blue.
 
 ## Testing (planned)
 
