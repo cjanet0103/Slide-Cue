@@ -212,8 +212,9 @@
   display: inline-flex;
   gap: 2px;
   padding: 3px;
-  background: var(--canvas-soft);
-  border: 1px solid var(--hairline);
+  /* a touch lighter than the warm canvas-soft (#f6f5f4) */
+  background: #fafaf9;
+  border: 1px solid #efeeec;
   border-radius: var(--rounded-full);
 }
 
@@ -295,7 +296,8 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  /* leaves a few px between the title and script edit fields */
+  gap: 16px;
 }
 
 .sectionHead {
@@ -333,7 +335,7 @@
 /* Pencil shown only while a title is being edited */
 .editingPencil {
   flex-shrink: 0;
-  margin-left: 10px;
+  margin-left: 8px;
   color: var(--primary);
   animation: pencilIn 140ms ease-out;
 }
@@ -354,8 +356,10 @@
   min-width: 120px;
   max-width: 100%;
   field-sizing: content;
-  margin: -3px -8px;
-  padding: 3px 8px;
+  /* Same 10px side inset as the script field so both boxes share one left edge;
+     negative margins keep the text exactly where it sits when not editing. */
+  margin: -5px 0 -5px -10px;
+  padding: 5px 10px;
   border: 0;
   border-radius: var(--rounded-md);
   background: var(--canvas-soft);
@@ -535,7 +539,7 @@
   width: 8px;
   height: 8px;
   border-radius: var(--rounded-full);
-  background: var(--brand);
+  background: var(--brand-vivid);
   animation: recPulse 1.2s ease-in-out infinite;
 }
 
@@ -633,4 +637,160 @@
   .clockTarget {
     display: none;
   }
+}
+
+/* Eye toggle that hides the running clocks */
+.eyeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-left: var(--space-xxs);
+  border: 0;
+  border-radius: var(--rounded-md);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.eyeBtn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--ink);
+}
+
+.eyeBtn[aria-pressed="true"] {
+  color: var(--ink-muted);
+}
+
+/* Masked clocks: keep the real digits' width, show a static placeholder on top */
+.clockValue {
+  position: relative;
+  display: inline-block;
+}
+
+.clockValue[data-masked] .clockReal {
+  visibility: hidden;
+}
+
+.clockMask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d6d3cf;
+  letter-spacing: 0.04em;
+}
+
+.recDotStill {
+  animation: none;
+}
+
+/* Script pane collapse: slides take the full width */
+.splitClosed {
+  grid-template-columns: minmax(0, 1fr) 0 0;
+}
+
+.splitClosed .divider,
+.scriptCol[hidden] {
+  display: none;
+}
+
+.slidesCol {
+  position: relative;
+}
+
+.tabsRow {
+  position: relative;
+}
+
+.paneToggle {
+  position: absolute;
+  top: var(--space-sm);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--rounded-md);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.paneToggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--ink);
+}
+
+/* In the script pane: top-left, vertically centred with the switch */
+.paneToggleClose {
+  top: 50%;
+  left: var(--space-md);
+  transform: translateY(-50%);
+}
+
+/* On the slide area when collapsed: top-right, where the pane was */
+.paneToggleOpen {
+  right: var(--space-md);
+}
+
+@media (max-width: 900px) {
+  .splitClosed {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  /* leave room so the toggle never overlaps the switch */
+  .tabsRow {
+    justify-content: flex-end;
+  }
+}
+
+/* Script: read view by default, double-click to edit (mirrors title editing).
+   View and edit share padding + negative margin so the text never moves. */
+.scriptView {
+  margin: -6px -10px;
+  padding: 6px 10px;
+  min-height: 56px;
+  border-radius: var(--rounded-md);
+  font-size: 17px;
+  line-height: 1.85;
+  color: var(--ink-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  outline: none;
+  transition: background-color 120ms ease;
+}
+
+.scriptViewEditable:hover,
+.scriptViewEditable:focus-visible {
+  background: #fafaf9;
+}
+
+.scriptPlaceholder {
+  font-size: 15px;
+  color: #c9c5c0;
+}
+
+.scriptEditRow {
+  display: flex;
+  align-items: flex-start;
+}
+
+.textareaEditing {
+  flex: 1;
+  min-width: 0;
+  margin: -6px -10px;
+  padding: 6px 10px;
+  border-radius: var(--rounded-md);
+  background: var(--canvas-soft);
+  color: var(--ink);
 }

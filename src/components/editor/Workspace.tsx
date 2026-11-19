@@ -6,13 +6,24 @@ import { contextLabel, db, saveSlideTitle, updateProjectInfo } from "@/lib/db";
 import { formatClock, formatDuration } from "@/lib/timing";
 import { useRehearsal } from "@/hooks/useRehearsal";
 import { usePdfDocument } from "@/hooks/usePdfDocument";
-import { useSlideTitles } from "@/hooks/useSlideTitles";
+import { slideLabel, useSlideTitles } from "@/hooks/useSlideTitles";
 import { Button } from "@/components/ui/Button";
-import { ArrowLeftIcon, ClockIcon, FileIcon, MicIcon, PauseIcon, PlayIcon, StopIcon } from "@/components/ui/Icons";
+import {
+  ArrowLeftIcon,
+  ClockIcon,
+  EyeIcon,
+  EyeOffIcon,
+  FileIcon,
+  PanelRightIcon,
+  PauseIcon,
+  PlayIcon,
+  StopIcon,
+} from "@/components/ui/Icons";
 import { SlideViewer } from "./SlideViewer";
 import { ScriptCard } from "./ScriptCard";
 import { WholeScriptPanel } from "./WholeScriptPanel";
 import { PaneDivider } from "./PaneDivider";
+import { StartRehearsalButton } from "./StartRehearsalButton";
 import { RunsPanel } from "./RunsPanel";
 import { ProjectInfoDialog } from "./ProjectInfoDialog";
 import styles from "./Workspace.module.css";
@@ -22,6 +33,26 @@ type ScriptMode = "slides" | "whole" | "runs";
 // Slides/script split, remembered per browser as a convenience.
 const SPLIT_KEY = "slidecue.splitRatio";
 const DEFAULT_SPLIT = 0.55;
+// Whether the script pane is collapsed (slides only), remembered per browser.
+const SCRIPTS_CLOSED_KEY = "slidecue.scriptsClosed";
+function readScriptsClosed(): boolean {
+  try {
+    return localStorage.getItem(SCRIPTS_CLOSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+// Whether rehearsal clocks are hidden, remembered per browser.
+const HIDE_CLOCKS_KEY = "slidecue.hideClocks";
+function readHideClocks(): boolean {
+  try {
+    return localStorage.getItem(HIDE_CLOCKS_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 function readSplit(): number {
   try {
     const v = Number(localStorage.getItem(SPLIT_KEY));
@@ -29,6 +60,23 @@ function readSplit(): number {
   } catch {
     return DEFAULT_SPLIT;
   }
+}
+
+/** A clock value that can be masked in place: the real digits keep their width
+ * (invisible), and a static placeholder sits on top, so nothing shifts or ticks. */
+function MaskedClock({ className, value, masked }: { className: string; value: string; masked: boolean }) {
+  return (
+    <span className={`${className} ${styles.clockValue}`} data-masked={masked || undefined}>
+      <span className={styles.clockReal} aria-hidden={masked || undefined}>
+        {value}
+      </span>
+      {masked && (
+        <span className={styles.clockMask} aria-label="숨김">
+          ––:––
+        </span>
+      )}
+    </span>
+  );
 }
 
 interface Props {
@@ -86,16 +134,38 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
   });
   const rehearsing = rehearsal.inProgress;
 
+  const [scriptsClosed, setScriptsClosed] = useState(readScriptsClosed);
+  const toggleScripts = () => {
+    const next = !scriptsClosed;
+    setScriptsClosed(next);
+    try {
+      localStorage.setItem(SCRIPTS_CLOSED_KEY, next ? "1" : "0");
+    } catch {
+      // Storage blocked: the choice lasts until the page reloads.
+    }
+  };
+
+  const [clocksHidden, setClocksHidden] = useState(readHideClocks);
+  const toggleClocks = () => {
+    const next = !clocksHidden;
+    setClocksHidden(next);
+    try {
+      localStorage.setItem(HIDE_CLOCKS_KEY, next ? "1" : "0");
+    } catch {
+      // Storage blocked: the choice lasts until the page reloads.
+    }
+  };
+
   const changeSlide = (index: number) => {
     setCurrent(index);
     rehearsal.goTo(index);
   };
 
-  const startRehearsal = () => {
+  const startRehearsal = (fromSlide: number) => {
     (document.activeElement as HTMLElement | null)?.blur?.();
-    setCurrent(0);
+    setCurrent(fromSlide);
     setMode("slides");
-    rehearsal.start(0);
+    rehearsal.start(fromSlide);
   };
 
   // While rehearsing, arrow keys / presentation clicker move slides and P pauses.
@@ -161,17 +231,34 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
         </div>
         {rehearsing ? (
           <div className={styles.clocks} aria-label="연습 시간">
-            <span className={`${styles.recDot} ${rehearsal.paused ? styles.recDotPaused : ""}`} aria-hidden="true" />
-            <span className={styles.clockLabel}>{rehearsal.paused ? "일시정지" : "연습 중"}</span>
             <span
-              className={`${styles.clockMain} ${project.targetSec && rehearsal.totalMs > project.targetSec * 1000 ? styles.clockOver : ""}`}
-            >
-              {formatClock(rehearsal.totalMs)}
-            </span>
-            {project.targetSec ? <span className={styles.clockTarget}>/ {formatClock(project.targetSec * 1000)}</span> : null}
+              className={`${styles.recDot} ${rehearsal.paused ? styles.recDotPaused : ""} ${clocksHidden ? styles.recDotStill : ""}`}
+              aria-hidden="true"
+            />
+            <span className={styles.clockLabel}>{rehearsal.paused ? "일시정지" : "연습 중"}</span>
+            {/* Hidden = masked in place: same widths, nothing moves or ticks. */}
+            <MaskedClock
+              className={`${styles.clockMain} ${!clocksHidden && project.targetSec && rehearsal.totalMs > project.targetSec * 1000 ? styles.clockOver : ""}`}
+              value={formatClock(rehearsal.totalMs)}
+              masked={clocksHidden}
+            />
+            {project.targetSec ? (
+              <span className={styles.clockTarget}>/ {formatClock(project.targetSec * 1000)}</span>
+            ) : null}
             <span className={styles.clockDivider} aria-hidden="true" />
             <span className={styles.clockLabel}>슬라이드</span>
-            <span className={styles.clockSlide}>{formatClock(rehearsal.slideMs)}</span>
+            <MaskedClock className={styles.clockSlide} value={formatClock(rehearsal.slideMs)} masked={clocksHidden} />
+            {/* Toggle hiding the ticking numbers (they keep counting); like a design tool's eye toggle */}
+            <button
+              type="button"
+              className={styles.eyeBtn}
+              onClick={toggleClocks}
+              aria-pressed={clocksHidden}
+              aria-label={clocksHidden ? "시간 보이기" : "시간 숨기기"}
+              title={clocksHidden ? "시간 보이기" : "시간 숨기기"}
+            >
+              {clocksHidden ? <EyeOffIcon width={18} height={18} /> : <EyeIcon width={18} height={18} />}
+            </button>
           </div>
         ) : (
         <button type="button" className={styles.infoBtn} onClick={() => setEditingInfo(true)} title="발표 정보 고치기">
@@ -213,22 +300,30 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
               </Button>
             </>
           ) : (
-            <Button variant="primary" onClick={startRehearsal}>
-              <MicIcon width={18} height={18} />
-              연습 시작
-            </Button>
+            <StartRehearsalButton current={current} currentLabel={slideLabel(titles, current)} onStart={startRehearsal} />
           )}
         </div>
       </header>
 
       <div
         ref={splitRef}
-        className={styles.split}
+        className={`${styles.split} ${scriptsClosed ? styles.splitClosed : ""}`}
         style={{ "--slides-share": `${(splitRatio * 100).toFixed(2)}%` } as React.CSSProperties}
       >
         <section className={styles.slidesCol} aria-label="슬라이드">
           {error && <p className={styles.errorBox}>PDF를 열지 못했어요. 대본은 그대로 편집할 수 있어요.</p>}
           <SlideViewer doc={doc} index={current} pageCount={pageCount} onChange={changeSlide} keyboard={!rehearsing} />
+          {scriptsClosed && (
+            <button
+              type="button"
+              className={`${styles.paneToggle} ${styles.paneToggleOpen}`}
+              onClick={toggleScripts}
+              aria-label="대본 열기"
+              title="대본 열기"
+            >
+              <PanelRightIcon />
+            </button>
+          )}
         </section>
 
         <PaneDivider
@@ -240,14 +335,23 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
           containerRef={splitRef}
         />
 
-        <section className={styles.scriptCol} aria-label="대본">
+        <section className={styles.scriptCol} aria-label="대본" hidden={scriptsClosed}>
           <div className={styles.tabsRow}>
+            <button
+              type="button"
+              className={`${styles.paneToggle} ${styles.paneToggleClose}`}
+              onClick={toggleScripts}
+              aria-label="대본 닫기"
+              title="대본 닫기 (슬라이드만 보기)"
+            >
+              <PanelRightIcon />
+            </button>
             <div className={styles.segmented} role="tablist" aria-label="대본 보기 방식">
               {(
                 [
                   ["slides", "슬라이드별 대본"],
                   ["whole", "전체 대본"],
-                  ["runs", "회차 기록"],
+                  ["runs", "시간 기록"],
                 ] as const
               ).map(([value, label]) => (
                 <button

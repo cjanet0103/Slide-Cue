@@ -58,6 +58,41 @@ export const ScriptCard = forwardRef<HTMLLIElement, Props>(function ScriptCard(
   }, [projectId, index]);
 
   const slideNo = index + 1;
+
+  // Script editing: view by default, double-click to edit (like the title).
+  const [editingScript, setEditingScript] = useState(false);
+  const textBeforeEdit = useRef(text);
+
+  const flushSave = () => {
+    const p = pending.current;
+    if (p) {
+      clearTimeout(p.timer);
+      save(p.text);
+    }
+  };
+
+  const startScript = () => {
+    if (readOnly) return;
+    textBeforeEdit.current = text;
+    setEditingScript(true);
+  };
+
+  const finishScript = () => {
+    flushSave();
+    setEditingScript(false);
+  };
+
+  const cancelScript = () => {
+    const before = textBeforeEdit.current;
+    if (before !== text) {
+      if (pending.current) clearTimeout(pending.current.timer);
+      pending.current = null;
+      setText(before);
+      save(before);
+    }
+    setEditingScript(false);
+  };
+
   const [editingTitle, setEditingTitle] = useState(false);
   // Enter/Escape end editing; the blur that follows must not save again.
   const titleDone = useRef(false);
@@ -119,19 +154,61 @@ export const ScriptCard = forwardRef<HTMLLIElement, Props>(function ScriptCard(
             {saveState === "error" && <span className={styles.saveError}>저장하지 못했어요</span>}
           </span>
         </div>
-        <label className="visually-hidden" htmlFor={`script-${index}`}>
-          {slideNo}번 슬라이드 대본
-        </label>
-        <textarea
-          id={`script-${index}`}
-          className={styles.textarea}
-          value={text}
-          onChange={(e) => onChange(e.target.value)}
-          onFocus={() => onFocusSlide(index)}
-          readOnly={readOnly}
-          placeholder={readOnly ? "" : "대본을 붙여 넣으세요"}
-          rows={2}
-        />
+        {editingScript ? (
+          // Same soft field as editing a title (no pencil here). Clicking elsewhere or
+          // Ctrl/⌘+Enter saves; Esc puts back what was there before this edit.
+          <div className={styles.scriptEditRow}>
+            <label className="visually-hidden" htmlFor={`script-${index}`}>
+              {slideNo}번 슬라이드 대본
+            </label>
+            <textarea
+              id={`script-${index}`}
+              className={`${styles.textarea} ${styles.textareaEditing}`}
+              value={text}
+              onChange={(e) => onChange(e.target.value)}
+              onFocus={(e) => {
+                const end = e.currentTarget.value.length;
+                e.currentTarget.setSelectionRange(end, end);
+                onFocusSlide(index);
+              }}
+              onBlur={finishScript}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  cancelScript();
+                } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault();
+                  finishScript();
+                }
+              }}
+              placeholder="대본을 붙여 넣으세요"
+              autoFocus
+              rows={2}
+            />
+          </div>
+        ) : (
+          <div
+            className={`${styles.scriptView} ${readOnly ? "" : styles.scriptViewEditable}`}
+            role="button"
+            tabIndex={0}
+            aria-label={`${slideNo}번 슬라이드 대본${readOnly ? "" : ", 두 번 클릭하거나 Enter로 수정"}`}
+            title={readOnly ? undefined : "두 번 클릭하면 대본을 고칠 수 있어요"}
+            onClick={() => onFocusSlide(index)}
+            onDoubleClick={startScript}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                startScript();
+              }
+            }}
+          >
+            {text.trim() ? (
+              text
+            ) : (
+              <span className={styles.scriptPlaceholder}>{readOnly ? "" : "두 번 클릭해 대본을 붙여 넣으세요"}</span>
+            )}
+          </div>
+        )}
       </div>
     </li>
   );

@@ -81,14 +81,37 @@ export const ClockIcon = (p: P) => (
   </svg>
 );
 
-export const PencilIcon =(p: P) => (
+export const EyeIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+/** Closed eye, like the hide toggle in design tools. */
+export const EyeOffIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M3 10.5c2.2 2.6 5.3 4 9 4s6.8-1.4 9-4" />
+    <path d="M6 13.4 4.5 15.6M10 14.4l-.5 2.6M14 14.4l.5 2.6M18 13.4l1.5 2.2" />
+  </svg>
+);
+
+export const PencilIcon = (p: P) => (
   <svg {...base(p)}>
     <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z" />
     <path d="M13.5 6.5l4 4" />
   </svg>
 );
 
-export const ArrowLeftIcon =(p: P) => (
+/** Panel on the right (mirror of SidebarIcon), for showing/hiding the script pane. */
+export const PanelRightIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3" y="4" width="18" height="16" rx="3" />
+    <path d="M15 4v16" />
+  </svg>
+);
+
+export const ArrowLeftIcon = (p: P) => (
   <svg {...base(p)}>
     <path d="M19 12H5M11 6l-6 6 6 6" />
   </svg>

@@ -43,8 +43,15 @@ export function RunsPanel({ projectId, titles, selectedRunId, onSelect, onFocusS
     );
   }
 
-  // Oldest = 1회차.
-  const numberOf = new Map(runs.map((r, i) => [r.id, runs.length - i]));
+  // Numbered per kind, oldest first: "1번째 연습", "2번째 연습", … (live talks counted separately).
+  const numberOf = new Map<string, number>();
+  const counts: Record<string, number> = {};
+  [...runs].reverse().forEach((r) => {
+    counts[r.mode] = (counts[r.mode] ?? 0) + 1;
+    numberOf.set(r.id, counts[r.mode]);
+  });
+  // Short label; live talks (stage 4) add a 실전 tag so they read apart from rehearsals.
+  const runLabel = (r: Run) => `${numberOf.get(r.id)}번째${r.mode === "live" ? " 실전" : ""}`;
   const selected = runs.find((r) => r.id === selectedRunId) ?? runs[0];
   const previous: Run | undefined = runs.find((r) => r.mode === "rehearsal" && r.startedAt < selected.startedAt);
   const rows = compareRuns(selected.slideMs, previous?.slideMs ?? null);
@@ -53,7 +60,7 @@ export function RunsPanel({ projectId, titles, selectedRunId, onSelect, onFocusS
 
   return (
     <div className={styles.panel}>
-      <div className={styles.runList} role="listbox" aria-label="회차 선택">
+      <div className={styles.runList} role="listbox" aria-label="연습 기록 선택">
         {runs.map((r) => (
           <button
             key={r.id}
@@ -63,7 +70,8 @@ export function RunsPanel({ projectId, titles, selectedRunId, onSelect, onFocusS
             className={`${styles.runRow} ${r.id === selected.id ? styles.runRowActive : ""}`}
             onClick={() => onSelect(r.id)}
           >
-            <span className={styles.runNo}>{numberOf.get(r.id)}회차</span>
+            <span className={styles.runNo}>{runLabel(r)}</span>
+            <span className={styles.runTotal}>{formatDuration(r.totalMs)}</span>
             <span className={styles.runDate}>{dateFmt.format(r.startedAt)}</span>
           </button>
         ))}
@@ -72,7 +80,7 @@ export function RunsPanel({ projectId, titles, selectedRunId, onSelect, onFocusS
       <div className={styles.summary}>
         <div>
           <p className={styles.summaryLabel}>
-            {numberOf.get(selected.id)}회차 {selected.mode === "live" ? "실전" : "연습"} · 전체 시간
+            {runLabel(selected)} · 전체 시간
           </p>
           <p className={styles.summaryTotal}>{formatDuration(selected.totalMs)}</p>
         </div>
@@ -89,7 +97,7 @@ export function RunsPanel({ projectId, titles, selectedRunId, onSelect, onFocusS
           )}
           {previous && totalDelta !== null && (
             <p>
-              {numberOf.get(previous.id)}회차보다{" "}
+              {runLabel(previous)}보다{" "}
               <span className={styles[deltaText(totalDelta).tone]}>{deltaText(totalDelta).text}</span>
             </p>
           )}
@@ -104,7 +112,7 @@ export function RunsPanel({ projectId, titles, selectedRunId, onSelect, onFocusS
               이번
             </th>
             <th scope="col" className={styles.num}>
-              {previous ? `${numberOf.get(previous.id)}회차` : "지난번"}
+              {previous ? `${numberOf.get(previous.id)}번째` : "지난번"}
             </th>
             <th scope="col" className={styles.num}>
               차이

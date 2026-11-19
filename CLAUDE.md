@@ -24,7 +24,7 @@ Project setup (Next.js 16, React 19, TypeScript, ESLint 9 flat config, Vitest 3)
 | 4 | **실시간 스크립트 트래킹과 실전** — 기기 내 음성 인식, 구절 강조·수동 보정, 실전 모드, `/app/audience` 청중 화면, 자동 넘김 | F3, §4.3, T5·T6·T7·T9 |
 | 5 | **실제 발화로 대본 다듬기 + 공개 페이지** — 원문/인식문/반영 문장 비교, 선택 문장만 반영, `/`·`/guides/presentation-rehearsal`, robots·sitemap | F2, §4.4·4.5, T4 |
 
-Out of scope until asked: file export/import between devices (Should), long-pause detection and keywords (Could), GA4, whisper.cpp, payments. Payments, when added, go through Groble hosted payment links (see the PRD tech-stack table); what is paid for is still undecided, and how a no-login app verifies a purchase must be checked against what Groble offers first.
+Out of scope until asked: file export/import between devices (Should), long-pause detection and keywords (Could), part-based timing for team talks (Could; PRD F1 "파트별 시간" and T10 — compute part times by summing `slideMs`, so parts can be redefined over past runs), GA4, whisper.cpp, payments. Payments, when added, go through Groble hosted payment links (see the PRD tech-stack table); what is paid for is still undecided, and how a no-login app verifies a purchase must be checked against what Groble offers first.
 
 Commands (once dependencies are installed with `npm install`): `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`, `npm test` (single file: `npx vitest run src/lib/timing.test.ts`), `npm run gen:fixture` (3-page test PDF).
 
@@ -67,8 +67,8 @@ These come from PRD §4 and are easy to break:
 - Script versions: a project points at `currentScriptVersionId`. Unlocked versions are edited in place; once a run uses a version it is `locked`, and the next edit copies it into a new version (`saveSlideScript` in `src/lib/db.ts`).
 - `src/lib/pdf.ts` lazy-imports `pdfjs-dist` so the PDF engine only loads on app screens. PDF.js "display" renders wait for animation frames, so they stall in a hidden/background tab; `renderThumbnail` uses the "print" intent to avoid that.
 - `src/lib/timing.ts` is the pure timing reducer (start/pause/resume/goto/end) used by the presenter screen; `timing.test.ts` encodes PRD T2. Runs are saved via `saveRun`, which also locks the script version used.
-- Screens: `/app` (`EditorApp` → `Library` or `Workspace` with tabs 슬라이드별 대본 / 전체 대본 / 회차 기록). Rehearsal state lives in `src/hooks/useRehearsal.ts` and is rendered inside `Workspace` (clocks replace the info button; scripts go read-only). `?project=<id>&run=<id>` opens a project on its run history.
-- Design tokens live as CSS variables in `src/app/globals.css`; components use CSS Modules next to the component. Brand colors override the design doc's blue: `--brand` #00FCB4 (main action fills, with dark `--on-brand` text), `--brand-soft` #D1F6EC (highlights, incl. the stage-4 live-tracking highlight `--highlight-bg`), `--brand-deep` #08735B (= `--primary`: accent text, active numbers/titles, focus). Don't reintroduce blue.
+- Screens: `/app` (`EditorApp` → `Library` or `Workspace` with tabs 슬라이드별 대본 / 전체 대본 / 시간 기록 — the run history; PRD calls it 회차 기록). Rehearsal state lives in `src/hooks/useRehearsal.ts` and is rendered inside `Workspace` (clocks replace the info button; scripts go read-only). `?project=<id>&run=<id>` opens a project on its run history.
+- Design tokens live as CSS variables in `src/app/globals.css`; components use CSS Modules next to the component. Brand colors override the design doc's blue: `--brand` #00FCB4 (main action fills such as 연습 시작, with dark `--on-brand` text; also the rehearsal dot), `--brand-pill` #D2F6EE (selected/hovered list items such as the 회차 pills), `--brand-soft` #D1F6EC (highlights, incl. the stage-4 live-tracking highlight `--highlight-bg`), `--brand-deep` #08735B (= `--primary`: accent text, active numbers/titles, focus). Don't reintroduce blue.
 
 ## Testing (planned)
 

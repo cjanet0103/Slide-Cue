@@ -1,9 +1,13 @@
 /* Design tokens: layout/type from DESIGN-notion (1).md, colors = SlideCue brand */
 :root {
-  /* Brand: mint fill for main actions, soft mint for highlights, deep green for accent text/lines */
+  /* Brand: vivid mint fill for main actions (dark text), soft mints for highlights
+     and selected list items, deep green for accent text/lines. */
   --brand: #00fcb4;
   --brand-active: #00dca0;
   --on-brand: #04261d;
+  --brand-vivid: #00fcb4;
+  /* Selected / hovered items in lists (e.g. 1번째 연습) */
+  --brand-pill: #d2f6ee;
   --brand-soft: #d1f6ec;
   --brand-softer: #ecfaf5;
   --brand-deep: #08735b;
