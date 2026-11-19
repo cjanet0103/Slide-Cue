@@ -2,9 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 작업 규칙 (항상 지킬 것)
+
+1. **기준 문서는 PRD(`SlideCue_MVP_PRD.md`)다.** PRD에 없는 기능은 만들지 않는다. 필요해 보이면 만들기 전에 먼저 묻는다.
+2. **한 번에 한 단계만 구현하고, 단계가 끝나면 멈춘다.** 다음 단계로 넘어가지 않는다.
+3. **단계가 끝나면** 바꾼 내용과, 사용자가 브라우저에서 직접 확인하는 방법(열 주소, 누를 버튼, 보여야 하는 결과)을 알려준다.
+4. **사용자가 "확인했다"고 말하면** 그 단계를 커밋하고 GitHub(`origin` = github.com/cjanet0103/Slide-Cue, `main`)에 올린다. 확인 전에는 커밋·푸시하지 않는다.
+5. **설명은 비개발자가 이해할 수 있는 한국어로** 한다. 전문 용어는 풀어서 쓴다.
+6. **설치나 명령 실행이 필요하면** 무엇을 왜 하는지 한 줄로 먼저 설명한 뒤 실행한다.
+7. **API 키 같은 비밀 값은 코드와 대화에 쓰지 않는다.** 필요하면 사용자가 직접 `.env.local`에 넣도록 안내한다.
+
 ## Project state
 
-SlideCue is **pre-implementation**. The folder holds only two spec documents; there is no code, `package.json`, build, lint or test setup yet. Build commands below are the *planned* stack from the PRD — verify they exist before running them.
+SlideCue is in **initial setup**. `package.json` and config files (Next.js, TypeScript, ESLint, Vitest) exist, but app code under `src/` is not written yet. The approved build order is: project setup → design tokens/shared UI → `src/lib` modules with unit tests → editor screen (`/app`) → presenter and audience screens → public intro/guide pages → lint/build/browser check. Per the rules above, do one of these at a time.
+
+Commands (once dependencies are installed with `npm install`): `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`, `npm test` (single file: `npx vitest run src/lib/timing.test.ts`), `npm run gen:fixture` (3-page test PDF).
 
 - `SlideCue_MVP_PRD.md` — the product spec (Korean, v0.5). Source of truth for features, processing rules (§4) and acceptance tests T1–T9 (§5.1). Read the relevant section before implementing a feature.
 - `DESIGN-notion (1).md` — visual design tokens (Notion-style: warm `#f6f5f4` canvas, Inter, single blue `#0075de` accent for CTAs/links only, sticker colors decorative only, hairline + barely-there shadows, pill CTAs vs 8px utility buttons vs 4px inputs). Use its front-matter tokens for UI styling.
