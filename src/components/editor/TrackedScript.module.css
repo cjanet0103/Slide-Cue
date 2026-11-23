@@ -1,0 +1,84 @@
+.list {
+  list-style: none;
+  margin: -4px -10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Every phrase looks like the plain script; only the spoken one is tinted. */
+.phrase {
+  display: block;
+  width: 100%;
+  padding: 4px 10px 6px;
+  border: 0;
+  border-radius: var(--rounded-md);
+  background: transparent;
+  text-align: left;
+  font-size: 17px;
+  line-height: 2.2;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: background-color 200ms ease;
+}
+
+.phrase:hover {
+  background: #fafaf9;
+}
+
+/* The one emphasized phrase: soft mint, same weight (so lines never reflow). */
+.now,
+.now:hover {
+  background: var(--highlight-bg);
+  color: var(--ink);
+}
+
+/* Block, so the overlay below is positioned against this phrase's box. */
+.spoken {
+  position: relative;
+  display: block;
+}
+
+/* Progress line and star are drawn on top; they take no space in the text. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Rounded ends; moved every frame from script, so no CSS transitions. */
+.line {
+  position: absolute;
+  height: 2px;
+  border-radius: 999px;
+  background: #00fcb4;
+}
+
+/* Placed with transform (cheap to change every frame). */
+.star {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 15px;
+  height: 15px;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.spin {
+  display: block;
+  width: 15px;
+  height: 15px;
+  will-change: transform;
+}
+
+.spin svg {
+  display: block;
+}
+
+.empty {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink-faint);
+}

@@ -57,6 +57,7 @@
 
 /* Split: slides left, scripts right */
 .split {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: grid;
@@ -113,8 +114,12 @@
   outline: none;
 }
 
+/* No focus ring: arrow keys move slides while the viewer has focus, and the
+   ring around the whole slide area was distracting (the user asked). */
+.viewer:focus,
 .viewer:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--primary);
+  outline: none;
+  box-shadow: none;
 }
 
 .stage {
@@ -194,6 +199,7 @@
 
 /* Right pane */
 .scriptCol {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -474,6 +480,18 @@
 .infoBtn:hover {
   background: rgba(0, 0, 0, 0.04);
   color: var(--ink);
+}
+
+/* 발표 정보 · 발표 시간 설정, side by side */
+.infoGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.timeBtn {
+  color: var(--ink-secondary);
 }
 
 .infoItem {
@@ -794,3 +812,114 @@
   background: var(--canvas-soft);
   color: var(--ink);
 }
+
+/* Mic state in the rehearsal bar */
+.trackState {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--rounded-md);
+  color: var(--ink-faint);
+}
+
+.trackOn {
+  color: var(--brand-deep);
+  background: var(--brand-pill);
+}
+
+/* Right after a split: how many pages, and undo */
+.splitBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: var(--space-xs) var(--space-xxl) 0 var(--space-lg);
+  padding: 6px 8px 6px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-md);
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+
+.splitUndo {
+  margin-left: auto;
+  padding: 2px 6px;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.splitClose {
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+
+.splitClose:hover,
+.splitUndo:hover {
+  color: var(--ink);
+}
+
+/* Room under the last slide so the round button never covers it */
+.scriptScrollFabRoom {
+  padding-bottom: 88px;
+}
+
+/* Round buttons in the bottom-right corner of the editor (slides + script) */
+.fab {
+  position: absolute;
+  right: var(--space-lg);
+  bottom: var(--space-lg);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.fabBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: var(--rounded-full);
+  background: var(--brand);
+  color: var(--on-brand);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.fabBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+}
+
+.fabBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.fabBtn:focus-visible {
+  outline: 2px solid var(--brand-deep);
+  outline-offset: 2px;
+}
+
+/* 일시정지 / 재개: white with a hairline, beside the mint 종료 */
+.fabBtnQuiet {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--hairline), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+

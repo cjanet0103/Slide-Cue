@@ -1,0 +1,104 @@
+.parts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.part {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.partRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.name {
+  flex: 1 1 140px;
+  min-width: 120px;
+}
+
+.range {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.num {
+  width: 64px;
+  text-align: right;
+  -moz-appearance: textfield;
+}
+
+.num::-webkit-outer-spin-button,
+.num::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.bad {
+  border-color: var(--accent-orange);
+}
+
+.remove {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--rounded-md);
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+
+.remove:hover {
+  color: var(--ink);
+  background: #fafaf9;
+}
+
+.add {
+  align-self: flex-start;
+  padding: 6px 10px;
+  border: 1px dashed var(--hairline);
+  border-radius: var(--rounded-md);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.add:hover {
+  color: var(--ink);
+  border-color: #dcdad7;
+}
+
+.sum {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.sum strong {
+  color: var(--ink);
+}
+
+.sumNote {
+  color: var(--ink-faint);
+}
+
+.help {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-faint);
+}

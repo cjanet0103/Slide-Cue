@@ -16,20 +16,7 @@
   gap: var(--space-sm);
 }
 
-.method {
-  margin: 0;
-  font-size: 14px;
-  color: var(--ink-muted);
-}
 
-.warn {
-  margin: 0;
-  font-size: 14px;
-  color: #793400;
-  background: var(--danger-bg);
-  border-radius: var(--rounded-md);
-  padding: var(--space-xs) var(--space-sm);
-}
 
 .rawInput {
   flex: 1;
@@ -47,45 +34,14 @@
   color: #c9c5c0;
 }
 
-.rawInput:focus,
-.previewInput:focus {
+.rawInput:focus {
   outline: none;
   border-color: var(--primary);
 }
 
-.previewList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
 
-.previewItem {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: var(--space-xs);
-  align-items: start;
-}
 
-.previewNo {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink-muted);
-  text-align: right;
-  padding-top: 8px;
-}
 
-.previewInput {
-  width: 100%;
-  resize: vertical;
-  border: 1px solid var(--input-border);
-  border-radius: var(--rounded-xs);
-  padding: 6px 10px;
-  font-size: 15px;
-  line-height: 1.6;
-}
 
 .error {
   margin: 0 var(--space-lg) var(--space-sm);
@@ -98,8 +54,8 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-lg);
-  border-top: 1px solid var(--hairline);
+  /* right under the paste box, no divider */
+  padding: 0 var(--space-lg) var(--space-md);
   flex-shrink: 0;
   flex-wrap: wrap;
 }

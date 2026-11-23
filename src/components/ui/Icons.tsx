@@ -48,6 +48,13 @@ export const MicIcon = (p: P) => (
   </svg>
 );
 
+export const MicOffIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="9" y="3" width="6" height="11" rx="3" />
+    <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M4 4l16 16" />
+  </svg>
+);
+
 export const PlayIcon = (p: P) => (
   <svg {...base(p)}>
     <path d="M7 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L8.5 4.64A1 1 0 0 0 7 5.5z" fill="currentColor" stroke="none" />
@@ -126,5 +133,40 @@ export const ChevronLeftIcon = (p: P) => (
 export const ChevronRightIcon = (p: P) => (
   <svg {...base(p)}>
     <path d="M9 6l6 6-6 6" />
+  </svg>
+);
+
+export const ChevronDownIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
+/** Simple memo: a rounded sheet with two lines. */
+export const NoteIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="5" y="4" width="14" height="16" rx="2.5" />
+    <path d="M9 10h6M9 14h4" />
+  </svg>
+);
+
+/**
+ * ⋯ (more): three dots in a row, spaced apart so they read as three dots.
+ * Horizontal, not ⋮: it sits at the end of a text row and reads with it.
+ */
+export const MoreIcon = (p: P) => (
+  <svg {...base(p)} stroke="none">
+    <circle cx="4.5" cy="12" r="1.5" fill="currentColor" />
+    <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+    <circle cx="19.5" cy="12" r="1.5" fill="currentColor" />
+  </svg>
+);
+
+/** Trash can drawn to match NoteIcon: same 14×16 frame, rounded corners, two inner lines. */
+export const TrashIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M5 7h14M10 4h4" />
+    <path d="M7 7l.8 11.2A2 2 0 0 0 9.8 20h4.4a2 2 0 0 0 2-1.8L17 7" />
+    <path d="M10.5 11v5M13.5 11v5" />
   </svg>
 );

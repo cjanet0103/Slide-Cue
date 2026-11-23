@@ -3,6 +3,7 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { newId, saveRun, type Run } from "@/lib/db";
 import { applyTiming, initialTiming, readTiming } from "@/lib/timing";
+import type { Part } from "@/lib/parts";
 
 const TICK_MS = 250;
 
@@ -12,17 +13,21 @@ interface Options {
   /** Script version in use when the rehearsal starts (fixed for the run, PRD §4.1). */
   scriptVersionId: string;
   targetSec?: number;
+  /** Parts in effect for this rehearsal (copied onto the run). */
+  parts?: Part[];
   /** Called after the run is saved. */
   onSaved: (run: Run) => void;
 }
 
 /** Rehearsal timing + saving, for running a rehearsal inside the editor. */
-export function useRehearsal({ projectId, pageCount, scriptVersionId, targetSec, onSaved }: Options) {
+export function useRehearsal({ projectId, pageCount, scriptVersionId, targetSec, parts, onSaved }: Options) {
   const [timing, dispatch] = useReducer(applyTiming, pageCount, initialTiming);
   const [now, setNow] = useState(() => Date.now());
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const versionAtStart = useRef(scriptVersionId);
+  // Target and parts as they were when the rehearsal started.
+  const timingAtStart = useRef<{ targetSec?: number; parts?: Part[] }>({});
   const pending = useRef<Run | null>(null);
 
   const running = timing.status === "running";
@@ -42,6 +47,7 @@ export function useRehearsal({ projectId, pageCount, scriptVersionId, targetSec,
 
   const start = (slide: number) => {
     versionAtStart.current = scriptVersionId;
+    timingAtStart.current = { targetSec, parts: parts?.length ? parts.map((p) => ({ ...p })) : undefined };
     setSaveError(false);
     // Size the per-slide totals to the project (it may have loaded after this hook first ran).
     dispatch({ type: "reset", slideCount: pageCount });
@@ -71,7 +77,7 @@ export function useRehearsal({ projectId, pageCount, scriptVersionId, targetSec,
   };
 
   /** Ends the rehearsal; saves it if any time was recorded. Returns false if nothing was saved. */
-  const finish = async (): Promise<boolean> => {
+  const finish = async (extra?: Pick<Run, "transcripts">): Promise<boolean> => {
     const at = stamp();
     const ended = applyTiming(timing, { type: "end", at });
     dispatch({ type: "end", at });
@@ -89,7 +95,9 @@ export function useRehearsal({ projectId, pageCount, scriptVersionId, targetSec,
       totalMs: ended.runMs,
       slideMs: ended.slideMs,
       visits: ended.visits,
-      targetSec,
+      targetSec: timingAtStart.current.targetSec,
+      parts: timingAtStart.current.parts,
+      transcripts: extra?.transcripts?.length ? extra.transcripts : undefined,
     });
     return true;
   };

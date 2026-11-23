@@ -31,7 +31,7 @@
   --accent-green: #1aae39;
   --danger-bg: #fdf0e7;
   /* Live-tracking highlight (stage 4) */
-  --highlight-bg: var(--brand-soft);
+  --highlight-bg: #e2fcf6;
 
   --rounded-xs: 4px;
   --rounded-sm: 5px;

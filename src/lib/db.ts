@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
+import type { Part } from "./parts";
 
 /**
  * All presentation data lives only in this browser (PRD §4.5).
@@ -18,6 +19,8 @@ export interface Project {
   slideTitles?: string[];
   /** Target presentation length in seconds, if the presenter set one. */
   targetSec?: number;
+  /** Optional parts (named slide ranges with their own target). Not indexed. */
+  parts?: Part[];
   /** Where the talk is given, e.g. { kind: "contest", name: "캡스톤 디자인 공모전" }. */
   context?: PresentationContext;
 }
@@ -63,6 +66,12 @@ export interface Run {
   visits: { slide: number; startMs: number; endMs: number }[];
   /** Target length at the time of the run, if any. */
   targetSec?: number;
+  /** Parts as set when the run started (later edits don't change past runs). */
+  parts?: Part[];
+  /** What was said on each slide visit (on-device recognition), when tracking was on. */
+  transcripts?: { slide: number; text: string }[];
+  /** The presenter's own review note for this run (PRD 개인 회고 메모). Not indexed. */
+  memo?: string;
 }
 
 export interface PdfFile {
@@ -101,6 +110,29 @@ class SlideCueDB extends Dexie {
 }
 
 /** Saves a finished run and locks the script version it used (PRD §4.1). */
+/** Target time and parts for the next rehearsals (past runs keep their own copy). */
+export async function updateProjectTiming(projectId: string, timing: { targetSec?: number; parts: Part[] }): Promise<void> {
+  await db.projects.update(projectId, {
+    targetSec: timing.targetSec,
+    parts: timing.parts.length ? timing.parts : undefined,
+    updatedAt: Date.now(),
+  });
+}
+
+/** Save (or clear, with blank text) the review memo of a run. */
+export async function saveRunMemo(runId: string, memo: string): Promise<void> {
+  const text = memo.trim();
+  await db.runs.update(runId, { memo: text ? text : undefined });
+}
+
+/**
+ * Delete one run. Its script version stays locked (other runs or the history
+ * may still point at it); the script itself is untouched.
+ */
+export async function deleteRun(runId: string): Promise<void> {
+  await db.runs.delete(runId);
+}
+
 export async function saveRun(run: Run): Promise<void> {
   await db.transaction("rw", db.runs, db.scriptVersions, async () => {
     await db.runs.add(run);

@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { saveSlideScript } from "@/lib/db";
+import { TrackedScript } from "./TrackedScript";
 import { PencilIcon } from "@/components/ui/Icons";
 import styles from "./Workspace.module.css";
 
@@ -19,13 +20,31 @@ interface Props {
   onRename: (index: number, title: string) => void;
   /** Locked while rehearsing so the script used by the run doesn't change. */
   readOnly?: boolean;
+  /** Live tracking: the phrase being spoken on this slide (null = not tracking here). */
+  trackedIndex?: number | null;
+  /** Clicking a phrase while tracking corrects the position. */
+  onSelectSegment?: (index: number) => void;
+  /** Last spoken character in the tracked phrase (-1 = not started). */
+  trackChar?: number;
 }
 
 const SAVE_DELAY_MS = 500;
 
 /** One slide's script as a document section: number, heading, then the text. */
 export const ScriptCard = forwardRef<HTMLLIElement, Props>(function ScriptCard(
-  { projectId, index, initialText, title, active, onFocusSlide, onRename, readOnly = false },
+  {
+    projectId,
+    index,
+    initialText,
+    title,
+    active,
+    onFocusSlide,
+    onRename,
+    readOnly = false,
+    trackedIndex = null,
+    onSelectSegment,
+    trackChar = -1,
+  },
   ref,
 ) {
   const [text, setText] = useState(initialText);
@@ -186,6 +205,13 @@ export const ScriptCard = forwardRef<HTMLLIElement, Props>(function ScriptCard(
               rows={2}
             />
           </div>
+        ) : trackedIndex !== null ? (
+          <TrackedScript
+            text={text}
+            current={trackedIndex}
+            charIndex={trackChar}
+            onSelect={onSelectSegment}
+          />
         ) : (
           <div
             className={`${styles.scriptView} ${readOnly ? "" : styles.scriptViewEditable}`}
