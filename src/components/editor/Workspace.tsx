@@ -5,6 +5,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { contextLabel, db, saveAllSlideScripts, saveSlideTitle, updateProjectInfo, updateProjectTiming } from "@/lib/db";
 import { formatClock, formatDuration } from "@/lib/timing";
 import { useRehearsal } from "@/hooks/useRehearsal";
+import { useAudienceLink } from "@/hooks/useAudienceLink";
 import { useScriptTracking } from "@/hooks/useScriptTracking";
 import { detectLang } from "@/lib/matching";
 import { usePdfDocument } from "@/hooks/usePdfDocument";
@@ -20,6 +21,7 @@ import {
   MicIcon,
   MicOffIcon,
   PanelRightIcon,
+  ProjectorIcon,
   PauseIcon,
   PlayIcon,
   StopIcon,
@@ -185,15 +187,34 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
     advanceRef.current = changeSlide;
   });
 
+  // Audience window (screen 3): it follows `current` — every manual or automatic
+  // slide change — and a clicker pressed in that window steps the slide here.
+  const audience = useAudienceLink(projectId, current, (delta) => {
+    const next = current + delta;
+    if (next >= 0 && next < pageCount) changeSlide(next);
+  });
+
+  // This session shows the slides on the projector: it isn't saved as a run (the user's choice).
+  const [presenting, setPresenting] = useState(false);
+
   const finishRehearsal = () => {
     const transcripts = tracking.stop();
-    void rehearsal.finish({ transcripts });
+    if (presenting) {
+      rehearsal.discard();
+      audience.close();
+      setPresenting(false);
+    } else {
+      void rehearsal.finish({ transcripts });
+    }
   };
 
   const startRehearsal = (fromSlide: number, options: StartOptions) => {
     (document.activeElement as HTMLElement | null)?.blur?.();
     setCurrent(fromSlide);
     setMode("slides");
+    setPresenting(options.audience);
+    // Open it first, while the click still counts for opening windows.
+    if (options.audience) void audience.open();
     if (options.tracking)
       tracking.start(fromSlide, {
         lang: options.lang,
@@ -263,7 +284,7 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
           onClick={onBack}
           disabled={rehearsing}
           aria-label="내 발표로 돌아가기"
-          title={rehearsing ? "연습을 끝낸 뒤 나갈 수 있어요" : "내 발표"}
+          title={rehearsing ? "발표를 끝낸 뒤 나갈 수 있어요" : "내 발표"}
         >
           <ArrowLeftIcon />
         </button>
@@ -277,7 +298,7 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
               className={`${styles.recDot} ${rehearsal.paused ? styles.recDotPaused : ""} ${clocksHidden ? styles.recDotStill : ""}`}
               aria-hidden="true"
             />
-            <span className={styles.clockLabel}>{rehearsal.paused ? "일시정지" : "연습 중"}</span>
+            <span className={styles.clockLabel}>{rehearsal.paused ? "일시정지" : presenting ? "발표 중" : "연습 중"}</span>
             {/* Hidden = masked in place: same widths, nothing moves or ticks. */}
             <MaskedClock
               className={`${styles.clockMain} ${!clocksHidden && project.targetSec && rehearsal.totalMs > project.targetSec * 1000 ? styles.clockOver : ""}`}
@@ -366,6 +387,22 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
         )}
         {/* 연습 시작 / 일시정지 · 종료 live in the round buttons at the bottom right;
             only a failed save is reported up here. */}
+        {/* On the projector: shows the link, and brings the slide window back if it was closed */}
+        {rehearsing && presenting && !rehearsal.saveError && (
+          <div className={styles.topActions}>
+            <button
+              type="button"
+              className={`${styles.infoBtn} ${audience.connected ? styles.audienceOn : ""}`}
+              onClick={() => void audience.open()}
+              title={audience.connected ? "프로젝터에 슬라이드를 띄우고 있어요" : "프로젝터에 슬라이드 다시 띄우기"}
+            >
+              <span className={styles.infoItem}>
+                <ProjectorIcon width={16} height={16} />
+                {audience.connected ? "프로젝터 연결됨" : "프로젝터에 다시 띄우기"}
+              </span>
+            </button>
+          </div>
+        )}
         {rehearsal.saveError && (
           <div className={styles.topActions}>
             <span className={styles.saveFail}>기록을 저장하지 못했어요</span>
@@ -593,6 +630,8 @@ export function Workspace({ projectId, initialRunId, onBack }: Props) {
                 current={current}
                 defaultLang={detectLang(version.slides.join(" "))}
                 onStart={startRehearsal}
+                secondScreen={audience.secondScreen}
+                onPrepareAudience={() => void audience.prepare()}
                 variant="fab"
               />
             )}

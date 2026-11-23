@@ -102,6 +102,11 @@ export function useRehearsal({ projectId, pageCount, scriptVersionId, targetSec,
     return true;
   };
 
+  /** Ends without saving (a talk shown on the audience screen isn't kept as a run). */
+  const discard = () => {
+    dispatch({ type: "reset", slideCount: pageCount });
+  };
+
   const retry = () => {
     if (pending.current) void persist(pending.current);
   };
@@ -122,6 +127,7 @@ export function useRehearsal({ projectId, pageCount, scriptVersionId, targetSec,
     togglePause,
     goTo,
     finish,
+    discard,
     retry,
   };
 }

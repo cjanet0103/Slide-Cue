@@ -923,3 +923,8 @@
   box-shadow: 0 0 0 1px var(--hairline), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+
+/* 청중 화면 연결됨 (실전): deep green text, no fill */
+.audienceOn {
+  color: var(--brand-deep);
+}

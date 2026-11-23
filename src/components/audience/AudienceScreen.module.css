@@ -1,0 +1,88 @@
+/* The projector screen: black, the slide centred, nothing else. */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  color: #a39e98;
+  overflow: hidden;
+}
+
+.hideCursor {
+  cursor: none;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas {
+  display: block;
+}
+
+.canvasHidden {
+  visibility: hidden;
+}
+
+.note {
+  position: relative;
+  margin: 0;
+  padding: 0 24px;
+  font-size: 15px;
+  text-align: center;
+}
+
+.noteBottom {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(30, 30, 30, 0.85);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.note strong {
+  color: #e8e6e3;
+  font-weight: 600;
+}
+
+.fullBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(30, 30, 30, 0.8);
+  color: #e8e6e3;
+  font: inherit;
+  margin: 0;
+  font-size: 13px;
+  pointer-events: none; /* a hint: the click goes to the screen */
+  transition: opacity 200ms ease;
+}
+
+.fullBtnHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.key {
+  padding: 0 5px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  font-size: 11px;
+  color: #a39e98;
+}

@@ -150,6 +150,14 @@ export const NoteIcon = (p: P) => (
   </svg>
 );
 
+/** A screen on a stand: the audience (projector) window. */
+export const ProjectorIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3" y="4" width="18" height="12" rx="2" />
+    <path d="M12 16v4M8 20h8" />
+  </svg>
+);
+
 /**
  * ⋯ (more): three dots in a row, spaced apart so they read as three dots.
  * Horizontal, not ⋮: it sits at the end of a text row and reads with it.

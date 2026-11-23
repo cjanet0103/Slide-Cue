@@ -14,6 +14,8 @@ export interface StartOptions {
   lang: Lang;
   /** Move to the next slide when its opening is said (only with tracking). */
   autoAdvance: boolean;
+  /** Show the slides on the projector (only offered when one is connected). Such talks aren't saved. */
+  audience: boolean;
 }
 
 interface Props {
@@ -22,8 +24,22 @@ interface Props {
   /** Language guessed from the script. */
   defaultLang: Lang;
   onStart: (fromSlide: number, options: StartOptions) => void;
+  /** A second display (projector) is connected. */
+  secondScreen?: boolean;
+  /** Ask for screen-placement permission ahead of the start click. */
+  onPrepareAudience?: () => void;
   /** "fab": the round mic button in the bottom-right corner; its menu opens upward. */
   variant?: "pill" | "fab";
+}
+
+const AUDIENCE_KEY = "slidecue.audienceScreen";
+// With a projector connected, showing the slides there is on unless turned off.
+function readAudiencePref(): boolean {
+  try {
+    return localStorage.getItem(AUDIENCE_KEY) !== "0";
+  } catch {
+    return true;
+  }
 }
 
 const TRACKING_KEY = "slidecue.tracking";
@@ -51,15 +67,24 @@ const SUPPORT_TEXT: Record<Support, string> = {
   available: "말하는 구절을 대본에서 강조해요",
   "needs-install": "처음 한 번 음성 인식 언어팩 설치가 필요해요",
   installing: "언어팩을 설치하는 중…",
-  unsupported: "이 브라우저에서는 쓸 수 없어요. 직접 넘기며 연습해요",
+  unsupported: "이 브라우저에서는 쓸 수 없어요. 직접 넘기며 진행해요",
 };
 
 /**
  * 연습 시작: choose where to start, and whether to follow the script by voice.
  * Speech is recognized on this device only (PRD §4.3); otherwise rehearsal runs manually.
  */
-export function StartRehearsalButton({ current, defaultLang, onStart, variant = "pill" }: Props) {
+export function StartRehearsalButton({
+  current,
+  defaultLang,
+  onStart,
+  secondScreen = false,
+  onPrepareAudience,
+  variant = "pill",
+}: Props) {
   const [open, setOpen] = useState(false);
+  const [audiencePref, setAudiencePref] = useState(readAudiencePref);
+  const audienceOn = secondScreen && audiencePref;
   const [trackingPref, setTrackingPref] = useState(readTrackingPref);
   const [autoAdvancePref, setAutoAdvancePref] = useState(readAutoAdvancePref);
   const [lang, setLang] = useState<Lang>(defaultLang);
@@ -91,6 +116,8 @@ export function StartRehearsalButton({ current, defaultLang, onStart, variant = 
 
   const toggleMenu = () => {
     if (!open) check(lang);
+    // Ask for screen permission now (a click), so the start click opens the window at once.
+    if (!open && audienceOn) onPrepareAudience?.();
     setOpen(!open);
   };
 
@@ -120,6 +147,17 @@ export function StartRehearsalButton({ current, defaultLang, onStart, variant = 
     }
   };
 
+  const toggleAudience = () => {
+    const next = !audiencePref;
+    setAudiencePref(next);
+    if (next) onPrepareAudience?.();
+    try {
+      localStorage.setItem(AUDIENCE_KEY, next ? "1" : "0");
+    } catch {
+      // Storage blocked: the choice lasts until reload.
+    }
+  };
+
   const install = async () => {
     setSupport("installing");
     const ok = await installOnDevice(lang);
@@ -132,7 +170,7 @@ export function StartRehearsalButton({ current, defaultLang, onStart, variant = 
 
   const start = (from: number) => {
     setOpen(false);
-    onStart(from, { tracking: trackingOn, lang, autoAdvance: trackingOn && autoAdvancePref });
+    onStart(from, { tracking: trackingOn, lang, autoAdvance: trackingOn && autoAdvancePref, audience: audienceOn });
   };
 
   return (
@@ -222,6 +260,26 @@ export function StartRehearsalButton({ current, defaultLang, onStart, variant = 
               <span className={styles.knob} />
             </button>
           </div>
+
+          {/* Only with a projector connected: slides there, script here (PowerPoint-style presenter view) */}
+          {secondScreen && (
+            <div className={styles.trackRow}>
+              <div className={styles.trackText}>
+                <span className={styles.itemTitle}>프로젝터에 슬라이드 띄우기</span>
+                <span className={styles.itemSub}>대본은 이 화면에만 보여요 · 기록은 남지 않아요</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={audienceOn}
+                aria-label="프로젝터에 슬라이드 띄우기"
+                className={`${styles.switch} ${audienceOn ? styles.switchOn : ""}`}
+                onClick={toggleAudience}
+              >
+                <span className={styles.knob} />
+              </button>
+            </div>
+          )}
 
           <div className={styles.divider} />
 
